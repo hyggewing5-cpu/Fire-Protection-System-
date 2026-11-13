@@ -224,6 +224,20 @@
     .fail .chip { flex: none; min-width: 28px; justify-content: center; padding: 0 6px; }
     .tbl .actions { width: 64px; text-align: center; }
     .tbl-card { padding: 0; overflow: hidden; }
+    .alert { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 14px; padding: 14px 16px; border-radius: 12px; background: var(--bad-bg); border: 1px solid #E9B3BB; border-left: 6px solid var(--bad); color: #6B0A19; }
+    .alert .ic { margin-top: 3px; color: var(--bad); width: 22px; height: 22px; }
+    .alert b { display: block; font-size: 1.0625rem; }
+    .alert.is-clear { background: var(--ok-bg); border-color: #A8D8BB; border-left-color: var(--ok); color: #0A5A2E; }
+    .alert.is-clear .ic { color: var(--ok); }
+    .tbl-card > .card-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 16px 16px 12px; }
+    .tbl-card > .card-head h2 { margin: 0; padding: 0; }
+    .tbl-card > .card-head h2 { display: flex; align-items: center; gap: 8px; }
+    .card-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .card-actions .btn { min-height: 44px; }
+    .tab { position: relative; }
+    .dot { position: absolute; top: 6px; left: calc(50% + 6px); min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px; background: var(--flame); color: #fff; font-size: .75rem; font-weight: 700; line-height: 20px; text-align: center; border: 2px solid #fff; box-sizing: content-box; }
+    @media (min-width: 720px) { .dot { position: static; margin-left: 2px; border-color: var(--navy); } }
+    .note-text { white-space: pre-line; overflow-wrap: anywhere; }
     .tbl-card > h2 { padding: 16px 16px 12px; margin: 0; }
 
     /* ---------- รายงานรายเดือน (ฟอร์มกระดาษ) ---------- */
@@ -300,6 +314,7 @@
     .item-row .btn { flex: none; }
 
     .add-row { display: grid; gap: 10px; margin-bottom: 8px; }
+    #newStaffPrefix { max-width: 100%; }
 
     /* ---------- แจ้งเตือน / โหลด ---------- */
     .toasts { position: fixed; z-index: 100; top: calc(10px + var(--safe-t)); left: 50%; transform: translateX(-50%); width: min(94vw, 440px); display: grid; gap: 8px; pointer-events: none; }
@@ -336,8 +351,9 @@
       .grid-2 { grid-template-columns: 1fr 1fr; }
       .grid-3 { grid-template-columns: repeat(3, 1fr); }
       .grid-4 { grid-template-columns: repeat(4, 1fr); }
-      .add-row { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) auto; }
+      .add-row { grid-template-columns: minmax(0, .8fr) minmax(0, 1.3fr) minmax(0, 1fr) auto; }
       .add-row.add-room { grid-template-columns: minmax(0, 1fr) auto; }
+      .add-row.add-admin { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
     }
     @media (min-width: 720px) and (max-width: 959.98px) {
       .appbar-in { gap: 8px; }
@@ -464,7 +480,7 @@
     </div>
     <nav class="tabs" id="mainTabs" role="tablist" aria-label="เมนูหลัก">
       <button class="tab is-active" role="tab" id="t-check" data-view="check" aria-selected="true" aria-controls="tab-check" type="button"><svg class="ic" aria-hidden="true"><use href="#i-clipboard"/></svg><span class="l-long">ตรวจประจำวัน</span><span class="l-short">ตรวจ</span></button>
-      <button class="tab" role="tab" id="t-daily" data-view="daily" aria-selected="false" aria-controls="tab-daily" tabindex="-1" type="button"><svg class="ic" aria-hidden="true"><use href="#i-day"/></svg><span class="l-long">รายงานรายวัน</span><span class="l-short">รายวัน</span></button>
+      <button class="tab" role="tab" id="t-daily" data-view="daily" aria-selected="false" aria-controls="tab-daily" tabindex="-1" type="button"><svg class="ic" aria-hidden="true"><use href="#i-day"/></svg><span class="l-long">รายงานรายวัน</span><span class="l-short">รายวัน</span><span class="dot d-none" id="dayDot" aria-label="มีห้องพบข้อไม่ปกติวันนี้"></span></button>
       <button class="tab" role="tab" id="t-monthly" data-view="monthly" aria-selected="false" aria-controls="tab-monthly" tabindex="-1" type="button"><svg class="ic" aria-hidden="true"><use href="#i-month"/></svg><span class="l-long">รายงานรายเดือน</span><span class="l-short">รายเดือน</span></button>
       <button class="tab" role="tab" id="t-admin" data-view="admin" aria-selected="false" aria-controls="tab-admin" tabindex="-1" type="button"><svg class="ic" aria-hidden="true"><use href="#i-settings"/></svg><span class="l-long">ตั้งค่า</span><span class="l-short">ตั้งค่า</span></button>
     </nav>
@@ -544,6 +560,7 @@
       </div>
     </div>
 
+    <div class="alert d-none" id="dAlert" role="status"><svg class="ic" aria-hidden="true"><use href="#i-alert"/></svg><div id="dAlertText"></div></div>
     <div class="stats">
       <div class="stat"><b id="dTotal">-</b><span>ห้องทั้งหมด</span></div>
       <div class="stat is-ok"><b id="dChecked">-</b><span>ตรวจแล้ว</span></div>
@@ -562,10 +579,17 @@
     </section>
 
     <section class="card tbl-card">
-      <h2><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg>ห้องที่พบข้อไม่ปกติ</h2>
+      <div class="card-head">
+        <h2><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg>ข้อไม่ปกติและหมายเหตุ</h2>
+        <div class="card-actions no-print">
+          <button class="btn btn-quiet" type="button" onclick="copyDailySummary()"><svg class="ic" aria-hidden="true"><use href="#i-clipboard"/></svg>คัดลอกสรุป</button>
+          <button class="btn btn-quiet" type="button" onclick="downloadNotesCsv('day')"><svg class="ic" aria-hidden="true"><use href="#i-save"/></svg>CSV วันนี้</button>
+          <button class="btn btn-quiet" type="button" onclick="downloadNotesCsv('month')"><svg class="ic" aria-hidden="true"><use href="#i-month"/></svg>CSV ทั้งเดือน</button>
+        </div>
+      </div>
       <div class="table-wrap">
         <table class="tbl tbl-stack">
-          <thead><tr><th>ห้อง</th><th>ข้อที่ไม่ปกติ</th><th>ผู้ตรวจ</th><th>หมายเหตุ</th></tr></thead>
+          <thead><tr><th>ห้อง</th><th>ข้อที่ไม่ปกติ</th><th>หมายเหตุ</th><th>ผู้ตรวจ / เวลา</th></tr></thead>
           <tbody id="dAbnormalBody"></tbody>
         </table>
       </div>
@@ -624,6 +648,7 @@
           <button class="sub-btn" role="tab" id="subItemsBtn" data-sub="items" aria-selected="false" tabindex="-1" type="button"><svg class="ic" aria-hidden="true"><use href="#i-list"/></svg>รายการตรวจ</button>
           <button class="sub-btn" role="tab" id="subRoomsBtn" data-sub="rooms" aria-selected="false" tabindex="-1" type="button"><svg class="ic" aria-hidden="true"><use href="#i-door"/></svg>ห้อง</button>
           <button class="sub-btn" role="tab" id="subStaffBtn" data-sub="staff" aria-selected="false" tabindex="-1" type="button"><svg class="ic" aria-hidden="true"><use href="#i-user"/></svg>เจ้าหน้าที่</button>
+          <button class="sub-btn d-none" role="tab" id="subAdminsBtn" data-sub="admins" aria-selected="false" tabindex="-1" type="button"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>ผู้ดูแลระบบ</button>
         </div>
         <button class="btn btn-quiet btn-icon" type="button" onclick="adminLogout()" aria-label="ออกจากส่วนผู้ดูแล" title="ออกจากส่วนผู้ดูแล"><svg class="ic" aria-hidden="true"><use href="#i-logout"/></svg></button>
       </div>
@@ -735,6 +760,8 @@
       <div class="subview card tbl-card" id="sub-staff" role="tabpanel">
         <div style="padding:16px 16px 0">
           <div class="add-row">
+            <input type="text" class="ctl" id="newStaffPrefix" list="prefixList" placeholder="คำนำหน้า เช่น น.ส." maxlength="30" aria-label="คำนำหน้า" autocomplete="off">
+            <datalist id="prefixList"></datalist>
             <input type="text" class="ctl" id="newStaffName" placeholder="ชื่อ-สกุล เจ้าหน้าที่ *" maxlength="100" aria-label="ชื่อ-สกุล เจ้าหน้าที่" onkeydown="if(event.key==='Enter')addStaff()">
             <select class="ctl" id="newStaffRoom" aria-label="ห้อง"></select>
             <button class="btn btn-ok" type="button" onclick="addStaff()"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>เพิ่มเจ้าหน้าที่</button>
@@ -745,6 +772,24 @@
           <table class="tbl tbl-stack tbl-edit">
             <thead><tr><th>ชื่อ-สกุล</th><th style="width:34%">ห้อง</th><th class="actions"></th></tr></thead>
             <tbody id="staffListBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ผู้ดูแลระบบ (เฉพาะผู้ดูแลหลัก) -->
+      <div class="subview card tbl-card" id="sub-admins" role="tabpanel">
+        <div style="padding:16px 16px 0">
+          <div class="add-row add-admin">
+            <input type="text" class="ctl" id="newAdminName" placeholder="ชื่อผู้ดูแล *" maxlength="100" aria-label="ชื่อผู้ดูแล" autocomplete="off">
+            <input type="password" class="ctl" id="newAdminPw" placeholder="รหัสผ่าน (อย่างน้อย 6 ตัว) *" maxlength="100" aria-label="รหัสผ่านผู้ดูแลใหม่" autocomplete="new-password" onkeydown="if(event.key==='Enter')addAdmin()">
+            <button class="btn btn-ok" type="button" onclick="addAdmin()"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>เพิ่มผู้ดูแล</button>
+          </div>
+          <p class="hint" style="margin-bottom:12px">ผู้ดูแลที่เพิ่มเข้าสู่ระบบด้วยรหัสผ่านของตัวเอง และแก้ห้อง เจ้าหน้าที่ รายการตรวจ และหน้ารายงานได้ แต่เพิ่มหรือลบผู้ดูแลไม่ได้ (ทำได้เฉพาะผู้ดูแลหลักที่ใช้รหัสผ่านจากชีต Config เซลล์ A3) ระบบไม่แสดงรหัสผ่านของผู้ดูแลที่เพิ่มแล้ว ถ้าลืมให้ลบแล้วเพิ่มใหม่</p>
+        </div>
+        <div class="table-wrap">
+          <table class="tbl tbl-stack tbl-rooms">
+            <thead><tr><th>รหัส</th><th>ชื่อผู้ดูแล</th><th class="actions"></th></tr></thead>
+            <tbody id="adminListBody"></tbody>
           </table>
         </div>
       </div>
@@ -811,7 +856,8 @@
   var MONTHS_TH = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
   var DAYS_TH = ["วันอาทิตย์","วันจันทร์","วันอังคาร","วันพุธ","วันพฤหัสบดี","วันศุกร์","วันเสาร์"];
   var VIEWS = ['check', 'daily', 'monthly', 'admin'];
-  var SUBS = ['settings', 'items', 'rooms', 'staff'];
+  var SUBS = ['settings', 'items', 'rooms', 'staff', 'admins'];
+  var adminIsMain = false;
 
   // ---------- Utilities ----------
   function esc(s) {
@@ -952,6 +998,7 @@
     buildChecklist();
     applyReportLayout();
     renderReportHeader();
+    refreshDayDot();
     $('adminNotReady').classList.toggle('d-none', !!data.adminReady);
     showLoading(false);
   }
@@ -1115,6 +1162,11 @@
         $('btnSave').disabled = false;
         if (res.status === 'success') {
           toast(res.message + ' (' + roomName + ')', 'success');
+          if (hasBad) {
+            var nBad = results.filter(function (v) { return v === 'ไม่ปกติ'; }).length;
+            toast('แจ้งเตือน: ' + roomName + ' พบข้อไม่ปกติ ' + nBad + ' ข้อ บันทึกในสรุปประจำวันแล้ว', 'warning');
+          }
+          refreshDayDot();
           resetForm();
         } else {
           toast(res.message, 'danger');
@@ -1164,16 +1216,129 @@
           }).join('')
         : '<tr class="empty"><td colspan="3"><span class="empty-ok">' + ico('check') + (r.total ? 'ตรวจครบทุกห้องแล้ว' : 'ยังไม่มีห้อง') + '</span></td></tr>';
 
-      $('dAbnormalBody').innerHTML = r.abnormal.length
-        ? r.abnormal.map(function (x) {
-            var fails = x.items.map(function (n) {
-              return '<div class="fail"><span class="chip chip-bad">' + esc(n) + '</span><span>' + esc(itemLabel((globalData.itemTexts || [])[n - 1] || '')) + '</span></div>';
-            }).join('');
-            return '<tr><td data-label="ห้อง"><strong>' + esc(x.roomName) + '</strong></td><td data-label="ข้อที่ไม่ปกติ">' + fails + '</td><td data-label="ผู้ตรวจ">' +
-                   esc(x.inspector) + '</td><td data-label="หมายเหตุ">' + (esc(x.note) || '—') + '</td></tr>';
+      dailyData = r;
+      var bad = r.notes.filter(function (x) { return x.status === 'bad'; });
+      var badRooms = {};
+      bad.forEach(function (x) { badRooms[x.roomId] = 1; });
+      var nBadRooms = Object.keys(badRooms).length;
+      var al = $('dAlert');
+      al.classList.remove('d-none');
+      al.classList.toggle('is-clear', nBadRooms === 0);
+      $('dAlertText').innerHTML = nBadRooms
+        ? '<b>พบข้อไม่ปกติ ' + nBadRooms + ' ห้อง</b>' + esc(bad.map(function (x) { return x.roomName; }).filter(function (v, i, a) { return a.indexOf(v) === i; }).join(', ')) + ' — ดูรายละเอียดและหมายเหตุด้านล่าง'
+        : '<b>ไม่พบข้อไม่ปกติ</b>' + (r.checkedCount ? 'ห้องที่ตรวจแล้วทุกห้องปกติ' : 'ยังไม่มีการตรวจในวันนี้');
+      if (d === todayStr()) setDayDot(nBadRooms);
+
+      $('dAbnormalBody').innerHTML = r.notes.length
+        ? r.notes.map(function (x) {
+            var fails = x.items.length ? x.items.map(function (it) {
+              return '<div class="fail"><span class="chip chip-bad">' + esc(it.no) + '</span><span>' + esc(itemLabel(it.text)) + '</span></div>';
+            }).join('') : '<span class="chip chip-ok">ปกติทุกข้อ</span>';
+            return '<tr><td data-label="ห้อง"><strong>' + esc(x.roomName) + '</strong></td><td data-label="ข้อที่ไม่ปกติ">' + fails + '</td>' +
+                   '<td data-label="หมายเหตุ"><span class="note-text">' + (esc(x.note) || '—') + '</span></td>' +
+                   '<td data-label="ผู้ตรวจ / เวลา">' + esc(x.inspector) + ' <span class="hint">' + esc(x.time) + ' น.</span></td></tr>';
           }).join('')
-        : '<tr class="empty"><td colspan="4">ไม่พบรายการไม่ปกติ</td></tr>';
+        : '<tr class="empty"><td colspan="4">ไม่มีข้อไม่ปกติหรือหมายเหตุ</td></tr>';
     }).withFailureHandler(onFail).getDailyUncheckedReport(d);
+  }
+
+  var dailyData = null;
+
+  function setDayDot(n) {
+    var dot = $('dayDot');
+    dot.textContent = n > 99 ? '99+' : n;
+    dot.classList.toggle('d-none', !n);
+  }
+  // แจ้งเตือนบนเมนู "รายวัน": จำนวนห้องที่พบข้อไม่ปกติของวันนี้
+  function refreshDayDot() {
+    gsRun().withSuccessHandler(function (r) {
+      var rooms = {};
+      (r.notes || []).forEach(function (x) { if (x.status === 'bad') rooms[x.roomId] = 1; });
+      setDayDot(Object.keys(rooms).length);
+    }).withFailureHandler(function () {}).getDailyUncheckedReport(todayStr());
+  }
+
+  function thaiShort(ds) { var d = parseDate(ds); return d.getDate() + ' ' + MONTHS_TH[d.getMonth()] + ' ' + (d.getFullYear() + 543); }
+
+  // ข้อความสรุปประจำวัน สำหรับวางในไลน์/เอกสารรายงาน
+  function dailySummaryText() {
+    var r = dailyData;
+    if (!r) return '';
+    var L = [];
+    L.push('สรุปผลตรวจป้องกันอัคคีภัย' + (globalData.orgName ? ' ' + globalData.orgName : ''));
+    L.push('วันที่ ' + thaiShort(r.date));
+    L.push('ตรวจแล้ว ' + r.checkedCount + ' / ' + r.total + ' ห้อง' + (r.unchecked.length ? ' (ยังไม่ตรวจ ' + r.unchecked.length + ' ห้อง)' : ''));
+    if (r.unchecked.length) L.push('ยังไม่ตรวจ: ' + r.unchecked.map(function (x) { return x.name; }).join(', '));
+    var bad = r.notes.filter(function (x) { return x.status === 'bad'; });
+    var oth = r.notes.filter(function (x) { return x.status !== 'bad'; });
+    L.push('');
+    if (bad.length) {
+      L.push('ข้อไม่ปกติ ' + bad.length + ' รายการ:');
+      bad.forEach(function (x, i) {
+        L.push((i + 1) + ') ' + x.roomName + ' — ' + x.items.map(function (it) { return 'ข้อ ' + it.no + ' ' + itemLabel(it.text); }).join('; '));
+        if (x.note) L.push('   หมายเหตุ: ' + x.note);
+        L.push('   ผู้ตรวจ: ' + x.inspector + ' (' + x.time + ' น.)');
+      });
+    } else {
+      L.push('ไม่พบข้อไม่ปกติ');
+    }
+    if (oth.length) {
+      L.push('');
+      L.push('หมายเหตุอื่น ๆ:');
+      oth.forEach(function (x) { L.push('- ' + x.roomName + ': ' + x.note + ' (' + x.inspector + ')'); });
+    }
+    return L.join('\n');
+  }
+
+  function copyDailySummary() {
+    var text = dailySummaryText();
+    if (!text) { toast('ยังไม่มีข้อมูลสรุป', 'warning'); return; }
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) {}
+      ta.remove();
+      toast(ok ? 'คัดลอกสรุปแล้ว นำไปวางได้เลย' : 'คัดลอกไม่สำเร็จ', ok ? 'success' : 'danger');
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { toast('คัดลอกสรุปแล้ว นำไปวางได้เลย', 'success'); }, fallback);
+    } else { fallback(); }
+  }
+
+  // CSV: ใส่ ' นำหน้าเซลล์ที่ขึ้นต้นด้วย = + - @ กัน Excel ตีเป็นสูตร และใส่ BOM ให้ Excel อ่านภาษาไทยถูก
+  function csvCell(v) {
+    v = String(v == null ? '' : v);
+    if (/^[=+\-@\t\r]/.test(v)) v = "'" + v;
+    return '"' + v.replace(/"/g, '""') + '"';
+  }
+  function downloadNotesCsv(scope) {
+    var d = $('dailyDate').value || todayStr();
+    var from = d, to = d;
+    if (scope === 'month') {
+      var p = d.split('-');
+      from = p[0] + '-' + p[1] + '-01';
+      to = p[0] + '-' + p[1] + '-' + pad(new Date(+p[0], +p[1], 0).getDate());
+    }
+    gsRun().withSuccessHandler(function (res) {
+      if (res.status !== 'success') { toast(res.message, 'danger'); return; }
+      if (!res.rows.length) { toast('ช่วงนี้ไม่มีข้อไม่ปกติหรือหมายเหตุ', 'warning'); return; }
+      var head = ['วันที่', 'เวลา', 'รหัสห้อง', 'ห้อง', 'ผู้ตรวจ', 'สถานะ', 'ข้อที่ไม่ปกติ (เลขข้อ)', 'ข้อที่ไม่ปกติ (รายการ)', 'หมายเหตุ'];
+      var lines = [head.map(csvCell).join(',')];
+      res.rows.forEach(function (x) {
+        lines.push([x.date, x.time, x.roomId, x.roomName, x.inspector, x.status === 'bad' ? 'พบข้อไม่ปกติ' : 'หมายเหตุ',
+          x.items.map(function (i) { return i.no; }).join(' '),
+          x.items.map(function (i) { return i.no + '. ' + itemLabel(i.text); }).join(' | '), x.note].map(csvCell).join(','));
+      });
+      var blob = new Blob(['\ufeff' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'fire-inspection-notes_' + (scope === 'month' ? d.slice(0, 7) : d) + '.csv';
+      document.body.appendChild(a); a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+      toast('ดาวน์โหลดไฟล์ CSV แล้ว (' + res.rows.length + ' รายการ)', 'success');
+    }).withFailureHandler(onFail).getNotesReport(from, to);
   }
 
   // ---------- รายงานรายเดือน ----------
@@ -1323,6 +1488,9 @@
     gsRun().withSuccessHandler(function (res) {
       if (res.status === 'success') {
         adminPw = pw;
+        adminIsMain = !!res.isMain;
+        $('subAdminsBtn').classList.toggle('d-none', !adminIsMain);
+        if (adminIsMain) loadAdmins();
         $('adminPw').value = '';
         $('adminLogin').classList.add('d-none');
         $('adminPanel').classList.remove('d-none');
@@ -1339,6 +1507,9 @@
 
   function adminLogout() {
     adminPw = '';
+    adminIsMain = false;
+    $('subAdminsBtn').classList.add('d-none');
+    $('adminListBody').innerHTML = '';
     $('adminPanel').classList.add('d-none');
     $('adminLogin').classList.remove('d-none');
   }
@@ -1515,7 +1686,9 @@
     }).join('');
   }
 
+  var PREFIXES = ['นาย', 'นาง', 'นางสาว', 'น.ส.', 'ดร.', 'นพ.', 'พญ.', 'ทพ.', 'ภก.', 'ภญ.', 'พ.อ.อ.', 'พ.อ.ท.', 'พ.อ.ต.', 'จ.อ.', 'ร.อ.', 'ร.ท.', 'ร.ต.', 'น.อ.', 'น.ท.', 'น.ต.', 'น.อ.หญิง', 'น.ท.หญิง', 'น.ต.หญิง', 'ร.อ.หญิง', 'พ.อ.อ.หญิง', 'พ.อ.ท.หญิง', 'พ.อ.ต.หญิง', 'ส.อ.', 'ส.อ.หญิง'];
   function renderStaffList() {
+    $('prefixList').innerHTML = PREFIXES.map(function (x) { return '<option value="' + esc(x) + '"></option>'; }).join('');
     var cur = $('newStaffRoom').value;
     $('newStaffRoom').innerHTML = roomOptions(cur, '— ไม่ระบุห้อง —');
     var list = globalData.staff || [];
@@ -1541,8 +1714,13 @@
   function addStaff() {
     var name = $('newStaffName').value.trim();
     if (!name) { toast('กรุณากรอกชื่อเจ้าหน้าที่', 'warning'); return; }
-    runStaffAction('add', { name: name, roomId: $('newStaffRoom').value }, function () {
+    var prefix = $('newStaffPrefix').value.trim();
+    // ต่อคำนำหน้าติดกับชื่อแบบไทย (น.ส.โชติกา) ยกเว้นคำนำหน้าที่เป็นคำเต็ม (เช่น นาย ดร.) ให้เว้นวรรคเมื่อลงท้ายด้วยตัวอักษรไม่ใช่จุด
+    var full = prefix ? prefix + (/[.]$/.test(prefix) ? '' : ' ') + name : name;
+    if (full.length > 100) { toast('ชื่อยาวเกิน 100 ตัวอักษร', 'warning'); return; }
+    runStaffAction('add', { name: full, roomId: $('newStaffRoom').value }, function () {
       $('newStaffName').value = '';
+      $('newStaffPrefix').value = '';
     });
   }
 
@@ -1554,6 +1732,37 @@
       gsRun().withSuccessHandler(refreshRoomsAndStaff).withFailureHandler(onFail).getAppData();
     }).withFailureHandler(onFail).manageStaff(action, payload, adminPw);
   }
+
+  // ---------- ผู้ดูแลระบบ (เฉพาะผู้ดูแลหลัก) ----------
+  function renderAdmins(list) {
+    $('adminListBody').innerHTML = (list && list.length) ? list.map(function (a) {
+      return '<tr><td data-label="รหัส">' + esc(a.id) + '</td><td data-label="ชื่อผู้ดูแล"><strong>' + esc(a.name) + '</strong></td>' +
+             '<td class="actions"><button class="btn btn-danger-quiet btn-icon" type="button" data-del-admin="' + esc(a.id) + '" data-name="' + esc(a.name) + '" aria-label="ลบผู้ดูแล ' + esc(a.name) + '">' + ico('trash') + '</button></td></tr>';
+    }).join('') : '<tr class="empty"><td colspan="3">ยังไม่มีผู้ดูแลเพิ่มเติม ตอนนี้ใช้ได้เฉพาะรหัสผ่านหลัก</td></tr>';
+  }
+  function loadAdmins() {
+    gsRun().withSuccessHandler(function (res) {
+      if (res.status === 'success') renderAdmins(res.admins); else toast(res.message, 'danger');
+    }).withFailureHandler(onFail).manageAdmin('list', {}, adminPw);
+  }
+  function addAdmin() {
+    var name = $('newAdminName').value.trim(), pw = $('newAdminPw').value;
+    if (!name) { toast('กรุณากรอกชื่อผู้ดูแล', 'warning'); $('newAdminName').focus(); return; }
+    if (pw.length < 6) { toast('รหัสผ่านต้องยาวอย่างน้อย 6 ตัวอักษร', 'warning'); $('newAdminPw').focus(); return; }
+    gsRun().withSuccessHandler(function (res) {
+      toast(res.message, res.status === 'success' ? 'success' : 'danger');
+      if (res.status === 'success') { $('newAdminName').value = ''; $('newAdminPw').value = ''; renderAdmins(res.admins); }
+    }).withFailureHandler(onFail).manageAdmin('add', { name: name, password: pw }, adminPw);
+  }
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-del-admin]');
+    if (!btn) return;
+    if (!confirm('ต้องการลบผู้ดูแล "' + btn.getAttribute('data-name') + '" ใช่หรือไม่?\n(รหัสผ่านของผู้ดูแลคนนี้จะใช้เข้าระบบไม่ได้อีก)')) return;
+    gsRun().withSuccessHandler(function (res) {
+      toast(res.message, res.status === 'success' ? 'success' : 'danger');
+      if (res.status === 'success') renderAdmins(res.admins);
+    }).withFailureHandler(onFail).manageAdmin('delete', { id: btn.getAttribute('data-del-admin') }, adminPw);
+  });
 
   // ---------- จัดการห้อง ----------
   function renderRoomList() {
