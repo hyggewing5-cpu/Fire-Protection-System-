@@ -461,6 +461,7 @@
     <symbol id="i-logout" viewBox="0 0 24 24"><path d="M10 4H5v16h5M14 8l4 4-4 4M18 12H9"/></symbol>
     <symbol id="i-left" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></symbol>
     <symbol id="i-right" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="M21 3 3 10.5l6.5 2.5L12 20.5l2.5-5.8L21 3z"/><path d="M9.5 13 21 3"/></symbol>
     <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/></symbol>
   </defs>
 </svg>
@@ -557,6 +558,7 @@
         <input type="date" class="ctl" id="dailyDate" onchange="loadDailyReport()" aria-label="เลือกวันที่">
         <button class="btn btn-quiet btn-icon" type="button" onclick="shiftDay(1)" aria-label="วันถัดไป"><svg class="ic" aria-hidden="true"><use href="#i-right"/></svg></button>
         <button class="btn btn-quiet" type="button" onclick="goToday()">วันนี้</button>
+        <button class="btn btn-primary" id="btnTelegram" type="button" onclick="sendTelegram()"><svg class="ic" aria-hidden="true"><use href="#i-send"/></svg>ส่งเข้า Telegram</button>
       </div>
     </div>
 
@@ -648,6 +650,7 @@
           <button class="sub-btn" role="tab" id="subItemsBtn" data-sub="items" aria-selected="false" tabindex="-1" type="button"><svg class="ic" aria-hidden="true"><use href="#i-list"/></svg>รายการตรวจ</button>
           <button class="sub-btn" role="tab" id="subRoomsBtn" data-sub="rooms" aria-selected="false" tabindex="-1" type="button"><svg class="ic" aria-hidden="true"><use href="#i-door"/></svg>ห้อง</button>
           <button class="sub-btn" role="tab" id="subStaffBtn" data-sub="staff" aria-selected="false" tabindex="-1" type="button"><svg class="ic" aria-hidden="true"><use href="#i-user"/></svg>เจ้าหน้าที่</button>
+          <button class="sub-btn" role="tab" id="subTelegramBtn" data-sub="telegram" aria-selected="false" tabindex="-1" type="button"><svg class="ic" aria-hidden="true"><use href="#i-send"/></svg>Telegram</button>
           <button class="sub-btn d-none" role="tab" id="subAdminsBtn" data-sub="admins" aria-selected="false" tabindex="-1" type="button"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>ผู้ดูแลระบบ</button>
         </div>
         <button class="btn btn-quiet btn-icon" type="button" onclick="adminLogout()" aria-label="ออกจากส่วนผู้ดูแล" title="ออกจากส่วนผู้ดูแล"><svg class="ic" aria-hidden="true"><use href="#i-logout"/></svg></button>
@@ -776,6 +779,33 @@
         </div>
       </div>
 
+      <!-- Telegram -->
+      <div class="subview card" id="sub-telegram" role="tabpanel">
+        <div class="alert is-clear" id="tgStatus" style="margin-bottom:16px"><svg class="ic" aria-hidden="true"><use href="#i-send"/></svg><div id="tgStatusText">กำลังโหลด…</div></div>
+        <div class="grid grid-2">
+          <div class="field"><label class="lbl" for="tgToken">Bot token</label><input type="password" class="ctl" id="tgToken" autocomplete="off" placeholder="เว้นว่าง = ใช้ token เดิม" maxlength="120"><p class="hint">สร้างบอทกับ @BotFather แล้วคัดลอก token มาวาง ระบบเก็บ token ไว้ฝั่งเซิร์ฟเวอร์ ไม่แสดงกลับมาที่หน้าเว็บ</p></div>
+          <div class="field"><label class="lbl" for="tgChat">Chat ID ของกลุ่ม</label><input type="text" class="ctl" id="tgChat" autocomplete="off" placeholder="เช่น -1001234567890" maxlength="60"><p class="hint">เพิ่มบอทเข้ากลุ่ม ส่งข้อความในกลุ่มสักข้อความ แล้วดู Chat ID ที่ api.telegram.org/bot&lt;token&gt;/getUpdates (กลุ่มมักขึ้นต้นด้วย -100)</p></div>
+        </div>
+        <div class="switches" style="margin:14px 0">
+          <label class="switch"><input type="checkbox" class="sr" id="tgAuto"><span class="track"></span><span>ส่งแจ้งเตือนเข้ากลุ่มทันทีเมื่อมีการบันทึกที่พบข้อไม่ปกติ</span></label>
+        </div>
+        <fieldset class="group" style="margin-top:6px">
+          <legend>ส่งสรุปอัตโนมัติ</legend>
+          <div class="switches" style="flex-direction:column;gap:0">
+            <label class="switch"><input type="checkbox" class="sr" id="tgEvening"><span class="track"></span><span>รอบเย็น เวลา 18:00 — สรุปของ<b>วันนี้</b></span></label>
+            <label class="switch"><input type="checkbox" class="sr" id="tgMorning"><span class="track"></span><span>รอบเช้า เวลา 08:00 — สรุปของ<b>เมื่อวาน</b> (ห้องที่ยังไม่ได้ตรวจ)</span></label>
+            <label class="switch"><input type="checkbox" class="sr" id="tgSkipWe"><span class="track"></span><span>ไม่ส่งสรุปของวันเสาร์และวันอาทิตย์</span></label>
+          </div>
+          <p class="hint">เปิดได้ทั้งสองรอบ ตัวจับเวลาของ Google ส่งในช่วงประมาณ 1 ชั่วโมงหลังเวลาที่ตั้ง (เช่น 18:00–19:00) และส่งไม่เกินวันละครั้งต่อรอบ ตรวจให้แน่ใจว่าเขตเวลาของโปรเจกต์ Apps Script เป็น Asia/Bangkok (Project Settings)</p>
+        </fieldset>
+        <div class="form-actions">
+          <button class="btn btn-danger-quiet" type="button" onclick="clearTelegram()"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg>ล้างการตั้งค่า</button>
+          <button class="btn btn-quiet" type="button" onclick="testTelegram()"><svg class="ic" aria-hidden="true"><use href="#i-send"/></svg>ส่งข้อความทดสอบ</button>
+          <button class="btn btn-ok" id="btnSaveTg" type="button" onclick="saveTelegram()"><svg class="ic" aria-hidden="true"><use href="#i-save"/></svg>บันทึก</button>
+        </div>
+        <p class="hint" style="margin-top:14px">ปุ่ม "ส่งเข้า Telegram" ในหน้ารายงานรายวันจะส่งสรุปของวันที่เลือก เรียงลำดับ: รายการไม่ปกติ (อาจก่อให้เกิดอันตราย) → หมายเหตุอื่น ๆ → ห้องที่ตรวจแล้ว → ห้องที่ยังไม่ได้ตรวจ ผู้ใช้ทั่วไปกดส่งได้ แต่ส่งซ้ำได้ทุก 20 วินาที</p>
+      </div>
+
       <!-- ผู้ดูแลระบบ (เฉพาะผู้ดูแลหลัก) -->
       <div class="subview card tbl-card" id="sub-admins" role="tabpanel">
         <div style="padding:16px 16px 0">
@@ -856,7 +886,7 @@
   var MONTHS_TH = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
   var DAYS_TH = ["วันอาทิตย์","วันจันทร์","วันอังคาร","วันพุธ","วันพฤหัสบดี","วันศุกร์","วันเสาร์"];
   var VIEWS = ['check', 'daily', 'monthly', 'admin'];
-  var SUBS = ['settings', 'items', 'rooms', 'staff', 'admins'];
+  var SUBS = ['settings', 'items', 'rooms', 'staff', 'telegram', 'admins'];
   var adminIsMain = false;
 
   // ---------- Utilities ----------
@@ -1503,6 +1533,7 @@
         $('adminLogin').classList.add('d-none');
         $('adminPanel').classList.remove('d-none');
         fillSettingsForm();
+        loadTelegram();
         fillItemsForm();
         renderRoomList();
         renderStaffList();
@@ -1739,6 +1770,60 @@
       // รีเฟรชจากเซิร์ฟเวอร์เสมอ (กรณีผิดพลาดจะคืนค่าที่ช่องกรอกให้ตรงกับข้อมูลจริง)
       gsRun().withSuccessHandler(refreshRoomsAndStaff).withFailureHandler(onFail).getAppData();
     }).withFailureHandler(onFail).manageStaff(action, payload, adminPw);
+  }
+
+  // ---------- Telegram ----------
+  function sendTelegram() {
+    var d = $('dailyDate').value || todayStr();
+    if (!confirm('ส่งสรุปผลตรวจวันที่ ' + thaiShort(d) + ' เข้ากลุ่ม Telegram ใช่หรือไม่?')) return;
+    $('btnTelegram').disabled = true;
+    gsRun().withSuccessHandler(function (res) {
+      $('btnTelegram').disabled = false;
+      toast(res.message, res.status === 'success' ? 'success' : 'danger');
+    }).withFailureHandler(onFail).sendDailyTelegram(d);
+  }
+  function showTelegramStatus(res) {
+    var box = $('tgStatus');
+    box.classList.toggle('is-clear', !!res.configured);
+    $('tgStatusText').innerHTML = res.configured
+      ? '<b>เชื่อมต่อแล้ว</b>token ' + esc(res.tokenHint) + ' · แจ้งเตือนทันที: ' + (res.autoAlert ? 'เปิด' : 'ปิด') + ' · สรุปอัตโนมัติ: ' +
+        ((res.evening || res.morning) ? [res.evening ? '18:00' : '', res.morning ? '08:00' : ''].filter(Boolean).join(' และ ') : 'ปิด') +
+        (((res.evening ? 1 : 0) + (res.morning ? 1 : 0)) > (res.triggers || 0) ? ' <span class="chip chip-bad">ตัวจับเวลายังไม่ถูกตั้ง กดบันทึกอีกครั้ง</span>' : '')
+      : '<b>ยังไม่ได้ตั้งค่า</b>กรอก Bot token และ Chat ID ด้านล่าง';
+  }
+  function loadTelegram() {
+    gsRun().withSuccessHandler(function (res) {
+      if (res.status !== 'success') { toast(res.message, 'danger'); return; }
+      showTelegramStatus(res);
+      $('tgChat').value = res.chatId || '';
+      $('tgAuto').checked = !!res.autoAlert;
+      $('tgEvening').checked = !!res.evening;
+      $('tgMorning').checked = !!res.morning;
+      $('tgSkipWe').checked = !!res.skipWeekend;
+      $('tgToken').value = '';
+    }).withFailureHandler(onFail).getTelegramSettings(adminPw);
+  }
+  function saveTelegram() {
+    var chatId = $('tgChat').value.trim();
+    if (!chatId) { toast('กรุณากรอก Chat ID', 'warning'); $('tgChat').focus(); return; }
+    $('btnSaveTg').disabled = true;
+    gsRun().withSuccessHandler(function (res) {
+      $('btnSaveTg').disabled = false;
+      toast(res.message, res.status !== 'success' ? 'danger' : res.warning ? 'warning' : 'success');
+      if (res.status === 'success') loadTelegram();
+    }).withFailureHandler(onFail).saveTelegramSettings({ token: $('tgToken').value.trim(), chatId: chatId, autoAlert: $('tgAuto').checked, evening: $('tgEvening').checked, morning: $('tgMorning').checked, skipWeekend: $('tgSkipWe').checked }, adminPw);
+  }
+  function testTelegram() {
+    gsRun().withSuccessHandler(function (res) {
+      toast(res.message, res.status === 'success' ? 'success' : 'danger');
+    }).withFailureHandler(onFail).testTelegram(adminPw);
+  }
+  function clearTelegram() {
+    if (!confirm('ต้องการล้างการตั้งค่า Telegram (token และ Chat ID) ใช่หรือไม่?')) return;
+    gsRun().withSuccessHandler(function (res) {
+      toast(res.message, res.status === 'success' ? 'success' : 'danger');
+      if (res.status === 'success') loadTelegram();
+    }).withFailureHandler(onFail).saveTelegramSettings({ clear: true }, adminPw);
   }
 
   // ---------- ผู้ดูแลระบบ (เฉพาะผู้ดูแลหลัก) ----------
