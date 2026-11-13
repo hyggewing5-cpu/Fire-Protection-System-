@@ -1216,6 +1216,14 @@
           }).join('')
         : '<tr class="empty"><td colspan="3"><span class="empty-ok">' + ico('check') + (r.total ? 'ตรวจครบทุกห้องแล้ว' : 'ยังไม่มีห้อง') + '</span></td></tr>';
 
+      // เซิร์ฟเวอร์รุ่นเก่า (ยังไม่ได้ Deploy Code.js ตัวใหม่) ไม่ส่ง notes มา: แปลงจาก abnormal แทน และเตือนให้ Deploy ใหม่
+      if (!r.notes) {
+        r.notes = (r.abnormal || []).map(function (x) {
+          return { date: r.date, time: '', roomId: x.roomId, roomName: x.roomName, inspector: x.inspector, status: 'bad', note: x.note,
+                   items: (x.items || []).map(function (n) { return { no: n, text: (globalData.itemTexts || [])[n - 1] || '' }; }) };
+        });
+        toast('เซิร์ฟเวอร์ (Apps Script) ยังเป็นเวอร์ชันเก่า กรุณา Deploy Code.js ตัวใหม่', 'warning');
+      }
       dailyData = r;
       var bad = r.notes.filter(function (x) { return x.status === 'bad'; });
       var badRooms = {};
