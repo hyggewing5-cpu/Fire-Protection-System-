@@ -1,0 +1,1819 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#12304A">
+  <title>ระบบตรวจป้องกันอัคคีภัยก่อนปิดสำนักงาน</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================================
+       ระบบดีไซน์: ป้ายความปลอดภัย (ISO 7010)
+       เขียว = ปกติ (สี่เหลี่ยม)  แดง = ไม่ปกติ (วงกลม)  เทา = ไม่มี (เม็ดยา)  เหลือง = ยังไม่ตอบ
+       ============================================================ */
+    :root {
+      --paper: #EDF0F3;
+      --surface: #FFFFFF;
+      --ink: #15212D;
+      --ink-2: #4B5C6C;
+      --ink-3: #66778A;
+      --line: #D2DAE1;
+      --line-2: #E4E9ED;
+      --navy: #12304A;
+      --navy-2: #1B4568;
+      --flame: #C8102E;
+      --flame-on-dark: #FF5F52;
+      --ok: #0B7A3E;
+      --ok-bg: #E2F3E9;
+      --bad: #C8102E;
+      --bad-bg: #FCE7EA;
+      --warn-fill: #F2A900;
+      --warn-ink: #5A3700;
+      --warn-bg: #FFF4D6;
+      --na: #566574;
+      --na-bg: #E8ECEF;
+      --focus: #1B64D6;
+      --nav-h: 64px;
+      --header-h: 60px;
+      --safe-b: env(safe-area-inset-bottom, 0px);
+      --safe-t: env(safe-area-inset-top, 0px);
+      --gut: 16px;
+      font-family: 'IBM Plex Sans Thai', 'Sarabun', 'Noto Sans Thai', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; color-scheme: light; }
+    body {
+      margin: 0; background: var(--paper); color: var(--ink);
+      font-size: 1rem; line-height: 1.6; font-variant-numeric: tabular-nums;
+      -webkit-tap-highlight-color: transparent;
+    }
+    h1, h2, h3, p { margin: 0; }
+    button, input, select, textarea { font: inherit; color: inherit; }
+    button { cursor: pointer; touch-action: manipulation; }
+    [hidden] { display: none !important; }
+    .d-none { display: none !important; }
+    .sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+    :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+    .ic { width: 1.25em; height: 1.25em; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+    /* ---------- โครงหน้า ---------- */
+    .appbar { background: var(--navy); color: #fff; padding-top: var(--safe-t); }
+    .appbar-in { max-width: 1200px; margin: 0 auto; height: var(--header-h); padding: 0 var(--gut); display: flex; align-items: center; gap: 16px; }
+    .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .brand-sign { flex: none; width: 38px; height: 38px; border-radius: 8px; background: var(--flame); display: grid; place-items: center; color: #fff; }
+    .brand-sign .ic { width: 22px; height: 22px; }
+    .brand-logo { flex: none; height: 38px; max-width: 76px; object-fit: contain; background: #fff; border-radius: 8px; padding: 3px; }
+    .brand-text { display: grid; min-width: 0; line-height: 1.3; }
+    .brand-text strong { font-size: 1.0625rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .brand-text small { font-size: .8125rem; color: rgba(255,255,255,.78); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 16px var(--gut) calc(var(--nav-h) + var(--safe-b) + 28px); }
+    .view { display: none; }
+    .view.is-active { display: block; }
+    .view-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 16px; margin-bottom: 16px; }
+    .view-head h1 { font-size: 1.5rem; font-weight: 700; line-height: 1.35; }
+    .sub { color: var(--ink-2); font-size: .9375rem; }
+
+    /* เมนูหลัก: มือถือ = แถบล่างติดจอ */
+    .tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: #fff; border-top: 1px solid var(--line); padding-bottom: var(--safe-b); }
+    .tab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; height: var(--nav-h); padding: 0 4px; border: 0; border-top: 3px solid transparent; background: none; color: var(--ink-3); font-size: .8125rem; font-weight: 600; line-height: 1.3; }
+    .tab .ic { width: 24px; height: 24px; }
+    .tab.is-active { color: var(--navy); border-top-color: var(--flame); }
+    .l-long { display: none; }
+
+    /* ---------- องค์ประกอบพื้นฐาน ---------- */
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+    .card + .card { margin-top: 16px; }
+    .card h2, .list-head h2 { font-size: 1.125rem; font-weight: 700; line-height: 1.4; }
+    .card > h2 { margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .card > h2 .ic { color: var(--ink-3); }
+    .hint { color: var(--ink-3); font-size: .8125rem; line-height: 1.5; }
+    .req { color: var(--bad); }
+
+    .field { display: grid; gap: 6px; align-content: start; }
+    .field + .field { margin-top: 14px; }
+    .lbl { font-weight: 600; font-size: .9375rem; }
+    .ctl { width: 100%; min-height: 48px; padding: 0 14px; background: #fff; border: 1px solid #B8C3CD; border-radius: 10px; font-size: 1rem; line-height: 1.4; }
+    textarea.ctl { padding: 10px 14px; min-height: 92px; resize: vertical; line-height: 1.6; }
+    select.ctl { appearance: none; -webkit-appearance: none; padding-right: 40px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2366778A' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; }
+    .ctl:focus { border-color: var(--navy-2); }
+    .ctl.is-invalid { border-color: var(--bad); background-color: var(--bad-bg); }
+    .ctl-sm { min-height: 44px; }
+    input[type="date"].ctl, input[type="month"].ctl { min-width: 0; }
+
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 18px; border-radius: 10px; border: 1px solid transparent; font-weight: 600; line-height: 1.2; text-align: center; transition: background-color .15s, border-color .15s; }
+    .btn .ic { width: 20px; height: 20px; }
+    .btn-primary { background: var(--navy); color: #fff; }
+    .btn-primary:hover { background: var(--navy-2); }
+    .btn-quiet { background: #fff; color: var(--ink); border-color: #B8C3CD; }
+    .btn-quiet:hover { background: #F4F7F9; }
+    .btn-danger-quiet { background: #fff; color: var(--bad); border-color: #E3A6AF; }
+    .btn-danger-quiet:hover { background: var(--bad-bg); }
+    .btn-ok { background: var(--ok); color: #fff; }
+    .btn-ok:hover { background: #096733; }
+    .btn-icon { padding: 0; width: 48px; }
+    .btn:disabled { opacity: .55; cursor: not-allowed; }
+    .btn-block { width: 100%; }
+    @media (pointer: fine) { .btn, .ctl { min-height: 42px; } .btn-icon { width: 42px; } textarea.ctl { min-height: 84px; } .ctl-sm { min-height: 40px; } }
+
+    .chip { display: inline-flex; align-items: center; gap: 6px; padding: 1px 10px; border-radius: 999px; font-size: .8125rem; font-weight: 600; line-height: 1.6; background: var(--na-bg); color: var(--na); }
+    .chip-bad { background: var(--bad-bg); color: var(--bad); }
+    .chip-ok { background: var(--ok-bg); color: var(--ok); }
+    .notice { display: flex; gap: 10px; padding: 12px 14px; border-radius: 10px; background: var(--warn-bg); color: var(--warn-ink); font-size: .9375rem; line-height: 1.55; }
+    .notice .ic { margin-top: 2px; }
+
+    /* ---------- ตรวจประจำวัน ---------- */
+    .check-layout { display: flex; flex-direction: column; }
+    .check-side { display: contents; }
+    .form-card { order: 1; }
+    .check-list { order: 2; margin-top: 16px; }
+    .punch-card { display: none; }
+    .save-bar { order: 3; position: sticky; bottom: calc(var(--nav-h) + var(--safe-b)); z-index: 20; display: flex; align-items: center; gap: 12px; margin: 16px calc(-1 * var(--gut)) 0; padding: 10px var(--gut); background: #fff; border-top: 1px solid var(--line); box-shadow: 0 -8px 18px rgba(18,48,74,.08); }
+    .save-info { flex: none; display: grid; line-height: 1.3; font-size: .8125rem; color: var(--ink-2); }
+    .save-info b { font-size: 1.0625rem; color: var(--ink); font-weight: 700; }
+    .save-bar .btn { flex: 1; }
+
+    .mini-bar { position: sticky; top: var(--safe-t); z-index: 30; margin: 0 calc(-1 * var(--gut)); padding: 10px var(--gut) 12px; background: rgba(255,255,255,.97); border-bottom: 1px solid var(--line); }
+    .mini-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; font-size: .9375rem; }
+    .mini-row b { font-weight: 700; }
+    .punch-mini { display: flex; gap: 3px; }
+    .pm { flex: 1; min-width: 0; height: 14px; padding: 0; border-radius: 3px; border: 1.5px solid #B8C3CD; background: #fff; }
+    .pm.ok { background: var(--ok); border-color: var(--ok); }
+    .pm.bad { background: var(--bad); border-color: var(--bad); }
+    .pm.na { background: var(--na); border-color: var(--na); }
+
+    .list-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 16px 0 10px; }
+
+    .item { position: relative; display: grid; gap: 12px; padding: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; scroll-margin-top: 90px; }
+    .item + .item { margin-top: 10px; }
+    .item.is-ok { box-shadow: inset 5px 0 0 var(--ok); }
+    .item.is-bad { box-shadow: inset 5px 0 0 var(--bad); background: #FFFAFB; border-color: #E9B3BB; }
+    .item.is-missing { background: var(--warn-bg); border-color: var(--warn-fill); box-shadow: inset 5px 0 0 var(--warn-fill); }
+    .item.is-flash { animation: flash 1s ease-out; }
+    @keyframes flash { 0% { outline: 3px solid var(--focus); outline-offset: 2px; } 100% { outline: 3px solid transparent; outline-offset: 2px; } }
+    .item-head { display: flex; gap: 12px; align-items: flex-start; }
+    .item-no { flex: none; min-width: 32px; height: 32px; padding: 0 6px; border-radius: 8px; background: var(--paper); color: var(--ink-2); display: grid; place-items: center; font-size: .875rem; font-weight: 700; }
+    .item.is-missing .item-no { background: var(--warn-fill); color: var(--warn-ink); }
+    .item-text { font-weight: 500; line-height: 1.55; padding-top: 3px; }
+
+    .seg3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .opt { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; padding: 0 6px; background: #fff; border: 1.5px solid #B8C3CD; border-radius: 10px; font-weight: 600; font-size: .9375rem; line-height: 1.2; cursor: pointer; user-select: none; -webkit-user-select: none; transition: background-color .12s, border-color .12s; }
+    .opt:hover { background: #F4F7F9; }
+    .badge { flex: none; width: 24px; height: 24px; display: grid; place-items: center; color: #fff; }
+    .badge .ic { width: 15px; height: 15px; stroke-width: 3; }
+    .opt-ok .badge { background: var(--ok); border-radius: 6px; }
+    .opt-bad .badge { background: var(--bad); border-radius: 50%; }
+    .opt-na .badge { background: var(--na); border-radius: 12px; width: 28px; }
+    input:checked + .opt-ok { background: var(--ok); border-color: var(--ok); color: #fff; }
+    input:checked + .opt-bad { background: var(--bad); border-color: var(--bad); color: #fff; }
+    input:checked + .opt-na { background: var(--na); border-color: var(--na); color: #fff; }
+    input:checked + .opt .badge { background: #fff; }
+    input:checked + .opt-ok .badge { color: var(--ok); }
+    input:checked + .opt-bad .badge { color: var(--bad); }
+    input:checked + .opt-na .badge { color: var(--na); }
+    input:focus-visible + .opt { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+    .note-card { margin-top: 16px; }
+    .req-tag { display: none; margin-left: 6px; padding: 0 8px; border-radius: 999px; background: var(--bad-bg); color: var(--bad); font-size: .8125rem; font-weight: 600; }
+    .req-tag.is-on { display: inline-block; }
+
+    /* แถบความคืบหน้า (จอใหญ่): ช่องเลขข้อ แตะเพื่อข้ามไป */
+    .punch-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+    .punch-head strong { font-size: 1rem; }
+    .punch-head span { font-weight: 700; font-size: 1.125rem; }
+    .punch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)); gap: 6px; }
+    .pg { height: 36px; padding: 0; border-radius: 8px; border: 1.5px solid #B8C3CD; background: #fff; color: var(--ink-3); font-size: .8125rem; font-weight: 700; }
+    .pg:hover { background: #F4F7F9; }
+    .pg.ok { background: var(--ok-bg); border-color: var(--ok); color: var(--ok); }
+    .pg.bad { background: var(--bad); border-color: var(--bad); color: #fff; }
+    .pg.na { background: var(--na-bg); border-color: var(--na); color: var(--na); }
+    .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 12px; font-size: .8125rem; color: var(--ink-2); }
+    .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; border: 1.5px solid #B8C3CD; }
+    .legend .l-ok { background: var(--ok); border-color: var(--ok); }
+    .legend .l-bad { background: var(--bad); border-color: var(--bad); }
+    .legend .l-na { background: var(--na); border-color: var(--na); }
+
+    /* ---------- รายงานรายวัน ---------- */
+    .datebar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; min-width: 0; }
+    .datebar .ctl { width: auto; flex: 1 1 150px; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); background: #fff; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+    .stat { padding: 14px 12px; text-align: center; }
+    .stat + .stat { border-left: 1px solid var(--line); }
+    .stat b { display: block; font-size: 2rem; line-height: 1.15; font-weight: 700; }
+    .stat span { font-size: .8125rem; color: var(--ink-2); }
+    .stat.is-ok b { color: var(--ok); }
+    .stat.is-bad b { color: var(--bad); }
+    .stat.is-zero b { color: var(--ink-3); }
+    .bar-wrap { display: flex; align-items: center; gap: 12px; margin: 14px 0 18px; }
+    .bar { flex: 1; height: 12px; border-radius: 999px; background: #D9E0E6; overflow: hidden; }
+    .bar i { display: block; height: 100%; width: 0; background: var(--ok); border-radius: 999px; transition: width .4s ease; }
+    #dPercent { min-width: 3.2em; text-align: right; font-weight: 700; }
+
+    .tbl { width: 100%; border-collapse: collapse; }
+    .tbl th { text-align: left; font-weight: 600; font-size: .8125rem; color: var(--ink-2); padding: 10px 12px; background: #F4F7F9; border-bottom: 1px solid var(--line); }
+    .tbl td { padding: 12px; border-bottom: 1px solid var(--line-2); vertical-align: top; }
+    .tbl tbody tr:last-child td { border-bottom: 0; }
+    .tbl .empty td { text-align: center; color: var(--ink-3); padding: 22px 12px; }
+    .empty-ok { display: inline-flex; align-items: center; gap: 8px; color: var(--ok); font-weight: 600; }
+    .fail { display: flex; gap: 8px; align-items: flex-start; line-height: 1.5; }
+    .fail + .fail { margin-top: 6px; }
+    .fail .chip { flex: none; min-width: 28px; justify-content: center; padding: 0 6px; }
+    .tbl .actions { width: 64px; text-align: center; }
+    .tbl-card { padding: 0; overflow: hidden; }
+    .alert { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 14px; padding: 14px 16px; border-radius: 12px; background: var(--bad-bg); border: 1px solid #E9B3BB; border-left: 6px solid var(--bad); color: #6B0A19; }
+    .alert .ic { margin-top: 3px; color: var(--bad); width: 22px; height: 22px; }
+    .alert b { display: block; font-size: 1.0625rem; }
+    .alert.is-clear { background: var(--ok-bg); border-color: #A8D8BB; border-left-color: var(--ok); color: #0A5A2E; }
+    .alert.is-clear .ic { color: var(--ok); }
+    .tbl-card > .card-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 16px 16px 12px; }
+    .tbl-card > .card-head h2 { margin: 0; padding: 0; }
+    .tbl-card > .card-head h2 { display: flex; align-items: center; gap: 8px; }
+    .card-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .card-actions .btn { min-height: 44px; }
+    .tab { position: relative; }
+    .dot { position: absolute; top: 6px; left: calc(50% + 6px); min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px; background: var(--flame); color: #fff; font-size: .75rem; font-weight: 700; line-height: 20px; text-align: center; border: 2px solid #fff; box-sizing: content-box; }
+    @media (min-width: 720px) { .dot { position: static; margin-left: 2px; border-color: var(--navy); } }
+    .note-text { white-space: pre-line; overflow-wrap: anywhere; }
+    .tbl-card > h2 { padding: 16px 16px 12px; margin: 0; }
+
+    /* ---------- รายงานรายเดือน (ฟอร์มกระดาษ) ---------- */
+    .sheet { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+    .rep-head { margin-bottom: 18px; }
+    .report-logo { max-width: 100%; object-fit: contain; margin-bottom: 8px; }
+    .rep-title { font-size: 1.3125rem; font-weight: 700; line-height: 1.4; }
+    .rep-sub { font-size: 1.0625rem; font-weight: 600; color: var(--ink-2); line-height: 1.5; }
+    .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid #9FADBA; border-radius: 4px; }
+    .matrix { border-collapse: collapse; width: 100%; }
+    .matrix th, .matrix td { border: 1px solid #B9C4CD; padding: 4px 2px; text-align: center; min-width: 28px; line-height: 1.4; }
+    .matrix thead th { background: #DCE6EF; font-weight: 700; }
+    .matrix th:first-child, .matrix td:first-child { position: sticky; left: 0; z-index: 1; min-width: 140px; max-width: 220px; padding: 6px 10px; text-align: left; background: #fff; font-weight: 600; box-shadow: 1px 0 0 #9FADBA; }
+    .matrix thead th:first-child { background: #DCE6EF; }
+    .matrix .sat { background: #E3F0FB; }
+    .matrix .sun { background: #FBE3E3; }
+    .matrix thead .sat { background: #B9D9F2; }
+    .matrix thead .sun { background: #F4B9B9; color: #8A0A1E; }
+    .matrix thead tr.dow th { font-weight: 500; font-size: .85em; padding-top: 0; }
+    .matrix thead tr.dow th:first-child { background: #DCE6EF; }
+    .sw { display: inline-block; width: 14px; height: 14px; border: 1px solid #9FADBA; border-radius: 3px; vertical-align: -2px; margin: 0 4px 0 12px; }
+    .sw.sat { background: #E3F0FB; } .sw.sun { background: #FBE3E3; }
+    .mark-ok { color: var(--ok); font-weight: 700; }
+    .mark-bad { color: var(--bad); font-weight: 700; background: var(--bad-bg) !important; }
+    .rep-legend { margin: 10px 0; font-size: .875rem; color: var(--ink-2); }
+    .rep-foot { margin: 10px 0; white-space: pre-line; }
+    .sign-wrap { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 28px 48px; margin-top: 36px; padding-top: 12px; }
+    .sign-block { width: 100%; text-align: center; line-height: 1.9; }
+    .sign-block p { margin: 0; overflow-wrap: anywhere; }
+
+    /* ---------- ตั้งค่า ---------- */
+    .gate { max-width: 440px; margin: 8px auto 0; text-align: center; padding: 24px 20px; }
+    .gate .gate-ic { width: 56px; height: 56px; margin: 0 auto 12px; border-radius: 14px; background: var(--paper); display: grid; place-items: center; color: var(--navy); }
+    .gate .gate-ic .ic { width: 28px; height: 28px; }
+    .gate h2 { margin-bottom: 4px; }
+    .gate .sub { margin-bottom: 16px; }
+    .gate .row { display: grid; gap: 10px; text-align: left; }
+    .subtabs { display: flex; gap: 6px; overflow-x: auto; padding: 4px; background: #fff; border: 1px solid var(--line); border-radius: 12px; scrollbar-width: none; flex: 1; }
+    .subtabs::-webkit-scrollbar { display: none; }
+    .sub-btn { flex: none; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border: 0; border-radius: 9px; background: none; color: var(--ink-2); font-weight: 600; white-space: nowrap; }
+    .sub-btn .ic { width: 18px; height: 18px; }
+    .sub-btn.is-active { background: var(--navy); color: #fff; }
+    .admin-bar { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; }
+    .subview { display: none; }
+    .subview.is-active { display: block; }
+
+    .group { border: 0; padding: 0; margin: 0 0 24px; min-width: 0; }
+    .group > legend { padding: 0; margin-bottom: 12px; font-size: 1.0625rem; font-weight: 700; display: block; width: 100%; padding-bottom: 8px; border-bottom: 1px solid var(--line-2); }
+    .grid { display: grid; gap: 14px; }
+    .grid .field + .field { margin-top: 0; }
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    .subhead { font-weight: 600; color: var(--ink-2); font-size: .9375rem; margin: 4px 0 -4px; }
+
+    .logo-box { display: flex; gap: 14px; align-items: flex-start; }
+    .logo-preview { flex: none; width: 112px; height: 84px; display: grid; place-items: center; background: #fff; border: 1.5px dashed #9FADBA; border-radius: 10px; overflow: hidden; color: var(--ink-3); font-size: .8125rem; text-align: center; }
+    .logo-preview img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .logo-actions { display: grid; gap: 8px; flex: 1; min-width: 0; }
+    .logo-actions .btns { display: flex; gap: 8px; flex-wrap: wrap; }
+    .logo-actions .btn { min-height: 44px; }
+
+    .switch { display: flex; align-items: center; gap: 12px; min-height: 44px; cursor: pointer; }
+    .track { position: relative; flex: none; width: 48px; height: 28px; border-radius: 999px; background: #A9B6C1; transition: background-color .15s; }
+    .track::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; transition: transform .15s; }
+    input:checked + .track { background: var(--ok); }
+    input:checked + .track::after { transform: translateX(20px); }
+    input:focus-visible + .track { outline: 3px solid var(--focus); outline-offset: 2px; }
+    .switches { display: flex; flex-wrap: wrap; gap: 0 28px; }
+    .form-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; }
+
+    .item-row { display: flex; gap: 8px; align-items: center; }
+    .item-row + .item-row { margin-top: 8px; }
+    .item-row .n { flex: none; width: 40px; height: 44px; display: grid; place-items: center; border-radius: 10px; background: var(--paper); font-weight: 700; color: var(--ink-2); }
+    .item-row .ctl { flex: 1; min-width: 0; }
+    .item-row .btn { flex: none; }
+
+    .add-row { display: grid; gap: 10px; margin-bottom: 8px; }
+    #newStaffPrefix { max-width: 100%; }
+
+    /* ---------- แจ้งเตือน / โหลด ---------- */
+    .toasts { position: fixed; z-index: 100; top: calc(10px + var(--safe-t)); left: 50%; transform: translateX(-50%); width: min(94vw, 440px); display: grid; gap: 8px; pointer-events: none; }
+    .toast { pointer-events: auto; display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; background: #fff; border: 1px solid var(--line); border-left: 6px solid var(--ok); border-radius: 10px; box-shadow: 0 10px 28px rgba(18,48,74,.22); font-weight: 500; line-height: 1.5; animation: toast-in .22s ease-out; }
+    .toast .ic { margin-top: 2px; color: var(--ok); }
+    .toast.warning { border-left-color: var(--warn-fill); }
+    .toast.warning .ic { color: #9A6A00; }
+    .toast.danger { border-left-color: var(--bad); }
+    .toast.danger .ic { color: var(--bad); }
+    @keyframes toast-in { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+
+    #loading { position: fixed; inset: 0; z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: rgba(237,240,243,.94); font-weight: 600; color: var(--ink-2); }
+    .spin { width: 44px; height: 44px; border-radius: 50%; border: 4px solid #C8D2DA; border-top-color: var(--flame); animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ---------- แท็บเล็ตแนวตั้งขึ้นไป ---------- */
+    @media (min-width: 720px) {
+      :root { --gut: 24px; }
+      .wrap { padding-top: 24px; padding-bottom: 48px; }
+      .tabs { position: static; display: flex; gap: 2px; margin-left: auto; background: none; border: 0; padding: 0; }
+      .tab { flex-direction: row; gap: 8px; height: var(--header-h); padding: 0 14px; border-top: 0; border-bottom: 3px solid transparent; color: rgba(255,255,255,.78); font-size: .9375rem; white-space: nowrap; }
+      .tab .ic { width: 20px; height: 20px; }
+      .tab:hover { color: #fff; }
+      .tab.is-active { color: #fff; border-bottom-color: var(--flame-on-dark); }
+      .appbar { position: sticky; top: 0; z-index: 40; }
+      .card { padding: 20px 24px; }
+      .view-head h1 { font-size: 1.75rem; }
+      .mini-bar { top: calc(var(--header-h) + var(--safe-t)); }
+      .item { grid-template-columns: minmax(0, 1fr) 340px; align-items: center; column-gap: 24px; padding: 14px 18px; scroll-margin-top: 160px; }
+      .save-bar { bottom: 0; }
+      .sign-block { width: auto; min-width: 300px; }
+      .sheet { padding: 28px 32px; }
+      .stat b { font-size: 2.5rem; }
+      .grid-2 { grid-template-columns: 1fr 1fr; }
+      .grid-3 { grid-template-columns: repeat(3, 1fr); }
+      .grid-4 { grid-template-columns: repeat(4, 1fr); }
+      .add-row { grid-template-columns: minmax(0, .8fr) minmax(0, 1.3fr) minmax(0, 1fr) auto; }
+      .add-row.add-room { grid-template-columns: minmax(0, 1fr) auto; }
+      .add-row.add-admin { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
+    }
+    @media (min-width: 720px) and (max-width: 959.98px) {
+      .appbar-in { gap: 8px; }
+      .tab { padding: 0 10px; }
+      .brand-text small { max-width: 220px; }
+    }
+    @media (min-width: 960px) {
+      .l-long { display: inline; }
+      .l-short { display: none; }
+    }
+
+    /* ---------- จอกว้าง / iPad แนวนอน ---------- */
+    @media (min-width: 960px) {
+      .check-layout { display: grid; grid-template-columns: minmax(300px, 340px) minmax(0, 1fr); gap: 24px; align-items: start; }
+      .check-side { display: grid; gap: 16px; position: sticky; top: calc(var(--header-h) + var(--safe-t) + 20px); align-content: start; }
+      .check-list { margin-top: 0; }
+      .card + .card { margin-top: 0; }
+      .punch-card { display: block; }
+      .mini-bar { display: none; }
+      .save-info { display: none; }
+      .save-bar { position: static; margin: 0; padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; box-shadow: none; }
+      .list-head { margin-top: 0; }
+      .item { scroll-margin-top: 90px; }
+    }
+    @media (min-width: 1100px) {
+      :root { --gut: 32px; }
+    }
+
+    /* ---------- มือถือ: ตารางเปลี่ยนเป็นการ์ด ---------- */
+    @media (max-width: 719.98px) {
+      .tbl-stack thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+      .tbl-stack, .tbl-stack tbody, .tbl-stack tr, .tbl-stack td { display: block; }
+      .tbl-stack tr { margin: 0 12px 10px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+      .tbl-stack tbody { padding-bottom: 2px; }
+      .tbl-stack td { padding: 4px 0; border: 0; }
+      .tbl-stack td[data-label]::before { content: attr(data-label); display: block; font-size: .8125rem; color: var(--ink-3); line-height: 1.4; }
+      .tbl-stack .empty { border-style: dashed; }
+      .tbl-stack td.actions { width: auto; text-align: left; }
+      .tbl-edit tr[data-staff] { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; }
+      .tbl-edit tr[data-staff] td:first-child { grid-column: 1 / -1; }
+      .tbl-edit tr[data-staff] td { padding: 0; }
+      .tbl-rooms tr { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; align-items: center; }
+      .tbl-rooms td { padding: 0; }
+      .tbl-rooms td:nth-child(3) { grid-column: 1 / -1; }
+      .tbl-rooms td.actions { grid-row: 1; grid-column: 2; }
+      .stat b { font-size: 1.75rem; }
+      .logo-box { flex-direction: column; }
+      .opt { font-size: .875rem; gap: 6px; }
+    }
+    @media (max-width: 380px) {
+      .opt { flex-direction: column; gap: 2px; min-height: 58px; }
+      .brand-text small { max-width: 150px; }
+      .tab { font-size: .75rem; padding: 0 2px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
+    }
+
+    /* ---------- พิมพ์ ---------- */
+    @media print {
+      * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      body { background: #fff; }
+      .appbar, .tabs, .no-print, #loading, .toasts, .view-head { display: none !important; }
+      .view:not(.is-active) { display: none !important; }
+      .wrap { max-width: none; padding: 0; }
+      .sheet { border: 0; padding: 0; border-radius: 0; }
+      .table-scroll { overflow: visible; border: 0; }
+      .matrix { table-layout: fixed; width: 100%; }
+      .matrix th, .matrix td { padding: 2px 0; }
+      .rep-head { margin-bottom: 8px; }
+      .sign-wrap { margin-top: 18px; gap: 16px 40px; }
+      .sheet { break-inside: avoid; }
+      .matrix th, .matrix td { min-width: 0; }
+      .matrix th:first-child, .matrix td:first-child { position: static; width: 130px; max-width: none; box-shadow: none; }
+      .sign-block { page-break-inside: avoid; }
+    }
+  </style>
+  <style id="pageStyle">@page { size: A4 landscape; margin: 10mm; }</style>
+</head>
+<body>
+
+<!-- ไอคอน -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-flame" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M12.4 2.2c.3 3.1 2.6 4.4 4.1 6.6 1.6 2.3 1.9 5.2.5 7.6-1.2 2.1-3.2 3.4-5.2 3.4-3.4 0-6-2.6-6-5.9 0-2.2 1.1-3.8 2.5-5.1.1 1.4.7 2.3 1.6 2.8-.3-3.1.2-6.6 2.5-9.4z"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-minus" viewBox="0 0 24 24"><path d="M6 12h12"/></symbol>
+    <symbol id="i-clipboard" viewBox="0 0 24 24"><path d="M9 4h6a1 1 0 0 1 1 1v1H8V5a1 1 0 0 1 1-1z"/><path d="M8 6H6a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1h-2"/><path d="m9 14 2.2 2.2L15.5 12"/></symbol>
+    <symbol id="i-day" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M8 3v4M16 3v4"/><circle cx="12" cy="15" r="1.4" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-month" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M8 3v4M16 3v4M8 14h.01M12 14h.01M16 14h.01M8 17h.01M12 17h.01"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></symbol>
+    <symbol id="i-print" viewBox="0 0 24 24"><path d="M7 9V4h10v5M7 17H5a1 1 0 0 1-1-1v-5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v5a1 1 0 0 1-1 1h-2"/><rect x="7" y="14" width="10" height="6" rx="1"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13M10 11v5M14 11v5"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.6 3-6 7-6s7 2.4 7 6"/></symbol>
+    <symbol id="i-door" viewBox="0 0 24 24"><path d="M6 21V4h9l3 2v15M4 21h16"/><path d="M12.5 13h.01"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="m4 7 1.5 1.5L8 6M4 13l1.5 1.5L8 12M4 19l1.5 1.5L8 18M11 7h9M11 13h9M11 19h9"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.5-3.5M4 5v4h4M4 13a8 8 0 0 0 14.5 3.5M20 19v-4h-4"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="m5 18 5-5 3 3 2-2 4 4"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4 2.8 19.5h18.4L12 4z"/><path d="M12 10v4.5M12 17.2h.01"/></symbol>
+    <symbol id="i-save" viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v5h7V4M8 20v-6h8v6"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24"><path d="M10 4H5v16h5M14 8l4 4-4 4M18 12H9"/></symbol>
+    <symbol id="i-left" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></symbol>
+    <symbol id="i-right" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/></symbol>
+  </defs>
+</svg>
+
+<div id="loading" role="status">
+  <div class="spin" aria-hidden="true"></div>
+  <div>กำลังโหลดข้อมูล</div>
+</div>
+<div class="toasts" id="toastArea" role="status" aria-live="polite"></div>
+
+<header class="appbar">
+  <div class="appbar-in">
+    <div class="brand">
+      <span class="brand-sign" id="brandSign"><svg class="ic" aria-hidden="true"><use href="#i-flame"/></svg></span>
+      <img id="navLogo" class="brand-logo d-none" alt="">
+      <span class="brand-text"><strong>ตรวจป้องกันอัคคีภัย</strong><small id="navOrg">&nbsp;</small></span>
+    </div>
+    <nav class="tabs" id="mainTabs" role="tablist" aria-label="เมนูหลัก">
+      <button class="tab is-active" role="tab" id="t-check" data-view="check" aria-selected="true" aria-controls="tab-check" type="button"><svg class="ic" aria-hidden="true"><use href="#i-clipboard"/></svg><span class="l-long">ตรวจประจำวัน</span><span class="l-short">ตรวจ</span></button>
+      <button class="tab" role="tab" id="t-daily" data-view="daily" aria-selected="false" aria-controls="tab-daily" tabindex="-1" type="button"><svg class="ic" aria-hidden="true"><use href="#i-day"/></svg><span class="l-long">รายงานรายวัน</span><span class="l-short">รายวัน</span><span class="dot d-none" id="dayDot" aria-label="มีห้องพบข้อไม่ปกติวันนี้"></span></button>
+      <button class="tab" role="tab" id="t-monthly" data-view="monthly" aria-selected="false" aria-controls="tab-monthly" tabindex="-1" type="button"><svg class="ic" aria-hidden="true"><use href="#i-month"/></svg><span class="l-long">รายงานรายเดือน</span><span class="l-short">รายเดือน</span></button>
+      <button class="tab" role="tab" id="t-admin" data-view="admin" aria-selected="false" aria-controls="tab-admin" tabindex="-1" type="button"><svg class="ic" aria-hidden="true"><use href="#i-settings"/></svg><span class="l-long">ตั้งค่า</span><span class="l-short">ตั้งค่า</span></button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ========== ตรวจประจำวัน ========== -->
+  <section class="view is-active" id="tab-check" role="tabpanel" aria-labelledby="t-check">
+    <div class="view-head">
+      <div>
+        <h1>ตรวจก่อนปิดอาคาร</h1>
+        <p class="sub" id="todayLabel"></p>
+      </div>
+    </div>
+
+    <div class="check-layout">
+      <div class="check-side">
+        <div class="card form-card">
+          <div class="field">
+            <label class="lbl" for="roomSelect">ห้อง / หน่วยงาน <span class="req">*</span></label>
+            <select class="ctl" id="roomSelect"></select>
+          </div>
+          <div class="field">
+            <label class="lbl" for="inspector">ผู้ตรวจสอบ <span class="req">*</span></label>
+            <input class="ctl" type="text" id="inspector" placeholder="ชื่อ-นามสกุล" maxlength="100" list="staffList" autocomplete="off" enterkeyhint="done">
+            <datalist id="staffList"></datalist>
+            <p class="hint">เลือกห้องแล้ว ระบบใส่ชื่อเจ้าหน้าที่ประจำห้องให้ แก้ไขได้</p>
+          </div>
+        </div>
+
+        <div class="card punch-card">
+          <div class="punch-head"><strong>ความคืบหน้า</strong><span id="progText">0 / 19</span></div>
+          <div class="punch-grid" id="punchGrid"></div>
+          <div class="legend"><span><i class="l-ok"></i>ปกติ</span><span><i class="l-bad"></i>ไม่ปกติ</span><span><i class="l-na"></i>ไม่มี</span><span><i></i>ยังไม่ตอบ</span></div>
+        </div>
+
+        <div class="save-bar">
+          <div class="save-info"><span>ตอบแล้ว</span><b id="saveInfo">0 / 19</b></div>
+          <button class="btn btn-primary" id="btnSave" type="button" onclick="submitChecklist()"><svg class="ic" aria-hidden="true"><use href="#i-save"/></svg>บันทึกผลการตรวจ</button>
+        </div>
+      </div>
+
+      <section class="check-list" aria-labelledby="listTitle">
+        <div class="mini-bar">
+          <div class="mini-row"><span>ตอบแล้ว <b id="miniText">0 / 19</b></span><span class="chip chip-bad d-none" id="badChip"></span></div>
+          <div class="punch-mini" id="punchMini"></div>
+        </div>
+        <div class="list-head">
+          <h2 id="listTitle">รายการตรวจ <span id="itemCountLabel">19</span> ข้อ</h2>
+          <button class="btn btn-quiet" type="button" onclick="setAllNormal()" title="ข้อที่ตอบแล้วจะไม่ถูกเปลี่ยน"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>เติม “ปกติ” ที่เหลือ</button>
+        </div>
+        <div id="checklist"></div>
+        <div class="card note-card">
+          <div class="field">
+            <label class="lbl" for="note">หมายเหตุ<span class="req-tag" id="noteReq">จำเป็น เพราะมีข้อที่ไม่ปกติ</span></label>
+            <textarea class="ctl" id="note" rows="3" maxlength="500" placeholder="ระบุรายละเอียดเมื่อพบข้อที่ไม่ปกติ"></textarea>
+          </div>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  <!-- ========== รายงานรายวัน ========== -->
+  <section class="view" id="tab-daily" role="tabpanel" aria-labelledby="t-daily">
+    <div class="view-head">
+      <div>
+        <h1>รายงานรายวัน</h1>
+        <p class="sub" id="dailyDateLabel"></p>
+      </div>
+      <div class="datebar">
+        <button class="btn btn-quiet btn-icon" type="button" onclick="shiftDay(-1)" aria-label="วันก่อนหน้า"><svg class="ic" aria-hidden="true"><use href="#i-left"/></svg></button>
+        <input type="date" class="ctl" id="dailyDate" onchange="loadDailyReport()" aria-label="เลือกวันที่">
+        <button class="btn btn-quiet btn-icon" type="button" onclick="shiftDay(1)" aria-label="วันถัดไป"><svg class="ic" aria-hidden="true"><use href="#i-right"/></svg></button>
+        <button class="btn btn-quiet" type="button" onclick="goToday()">วันนี้</button>
+      </div>
+    </div>
+
+    <div class="alert d-none" id="dAlert" role="status"><svg class="ic" aria-hidden="true"><use href="#i-alert"/></svg><div id="dAlertText"></div></div>
+    <div class="stats">
+      <div class="stat"><b id="dTotal">-</b><span>ห้องทั้งหมด</span></div>
+      <div class="stat is-ok"><b id="dChecked">-</b><span>ตรวจแล้ว</span></div>
+      <div class="stat is-bad" id="statUnchecked"><b id="dUnchecked">-</b><span>ยังไม่ตรวจ</span></div>
+    </div>
+    <div class="bar-wrap"><div class="bar" role="img" aria-label="สัดส่วนห้องที่ตรวจแล้ว"><i id="dProgress"></i></div><span id="dPercent">0%</span></div>
+
+    <section class="card tbl-card">
+      <h2><svg class="ic" aria-hidden="true"><use href="#i-alert"/></svg>ห้องที่ยังไม่ได้ตรวจ</h2>
+      <div class="table-wrap">
+        <table class="tbl tbl-stack">
+          <thead><tr><th>รหัส</th><th>ห้อง</th><th>เจ้าหน้าที่ประจำห้อง</th></tr></thead>
+          <tbody id="dUncheckedBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card tbl-card">
+      <div class="card-head">
+        <h2><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg>ข้อไม่ปกติและหมายเหตุ</h2>
+        <div class="card-actions no-print">
+          <button class="btn btn-quiet" type="button" onclick="copyDailySummary()"><svg class="ic" aria-hidden="true"><use href="#i-clipboard"/></svg>คัดลอกสรุป</button>
+          <button class="btn btn-quiet" type="button" onclick="downloadNotesCsv('day')"><svg class="ic" aria-hidden="true"><use href="#i-save"/></svg>CSV วันนี้</button>
+          <button class="btn btn-quiet" type="button" onclick="downloadNotesCsv('month')"><svg class="ic" aria-hidden="true"><use href="#i-month"/></svg>CSV ทั้งเดือน</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="tbl tbl-stack">
+          <thead><tr><th>ห้อง</th><th>ข้อที่ไม่ปกติ</th><th>หมายเหตุ</th><th>ผู้ตรวจ / เวลา</th></tr></thead>
+          <tbody id="dAbnormalBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </section>
+
+  <!-- ========== รายงานรายเดือน ========== -->
+  <section class="view" id="tab-monthly" role="tabpanel" aria-labelledby="t-monthly">
+    <div class="view-head no-print">
+      <div>
+        <h1>รายงานรายเดือน</h1>
+        <p class="sub">แบบฟอร์มพร้อมพิมพ์</p>
+      </div>
+      <div class="datebar">
+        <button class="btn btn-quiet btn-icon" type="button" onclick="shiftMonth(-1)" aria-label="เดือนก่อนหน้า"><svg class="ic" aria-hidden="true"><use href="#i-left"/></svg></button>
+        <input type="month" class="ctl" id="reportMonth" onchange="loadMonthlyReport()" aria-label="เลือกเดือน">
+        <button class="btn btn-quiet btn-icon" type="button" onclick="shiftMonth(1)" aria-label="เดือนถัดไป"><svg class="ic" aria-hidden="true"><use href="#i-right"/></svg></button>
+        <button class="btn btn-quiet" type="button" onclick="goSettings()"><svg class="ic" aria-hidden="true"><use href="#i-settings"/></svg>ปรับแต่ง</button>
+        <button class="btn btn-primary" type="button" onclick="window.print()"><svg class="ic" aria-hidden="true"><use href="#i-print"/></svg>พิมพ์</button>
+      </div>
+    </div>
+
+    <div class="sheet">
+      <div id="reportHeader" class="rep-head"></div>
+      <div class="table-scroll"><table class="matrix" id="monthlyTable"></table></div>
+      <div class="rep-legend" id="reportLegend"><span class="mark-ok">✔</span> = ตรวจแล้ว ปกติ &nbsp; <span class="mark-bad">✘</span> = ตรวจแล้ว พบข้อไม่ปกติ &nbsp; ช่องว่าง = ไม่ได้ตรวจ <span class="sw sat"></span>วันเสาร์ <span class="sw sun"></span>วันอาทิตย์</div>
+      <div class="rep-foot" id="reportFooterNote"></div>
+      <div id="reportSignature"></div>
+    </div>
+  </section>
+
+  <!-- ========== ตั้งค่า ========== -->
+  <section class="view" id="tab-admin" role="tabpanel" aria-labelledby="t-admin">
+    <div class="view-head">
+      <div>
+        <h1>ตั้งค่า</h1>
+        <p class="sub">สำหรับผู้ดูแลระบบ</p>
+      </div>
+    </div>
+
+    <div id="adminLogin" class="card gate">
+      <div class="gate-ic"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></div>
+      <h2>เข้าสู่ส่วนผู้ดูแล</h2>
+      <p class="sub">กรอกรหัสผ่านเพื่อแก้ไขห้อง เจ้าหน้าที่ รายการตรวจ และหน้ารายงาน</p>
+      <div class="notice d-none" id="adminNotReady" style="margin-bottom:14px;text-align:left"><svg class="ic" aria-hidden="true"><use href="#i-alert"/></svg><span>ยังไม่ได้ตั้งรหัสผ่านผู้ดูแล เปิด Google Sheet ชีต <b>Config</b> แล้วพิมพ์รหัสผ่านที่เซลล์ <b>A3</b> ก่อน</span></div>
+      <div class="row">
+        <input type="password" class="ctl" id="adminPw" placeholder="รหัสผ่านผู้ดูแล" autocomplete="current-password" aria-label="รหัสผ่านผู้ดูแล" onkeydown="if(event.key==='Enter')adminLogin()">
+        <button class="btn btn-primary" type="button" onclick="adminLogin()">เข้าสู่ระบบ</button>
+      </div>
+    </div>
+
+    <div id="adminPanel" class="d-none">
+      <div class="admin-bar">
+        <div class="subtabs" id="adminSubTabs" role="tablist" aria-label="หมวดตั้งค่า">
+          <button class="sub-btn is-active" role="tab" id="subSettingsBtn" data-sub="settings" aria-selected="true" type="button"><svg class="ic" aria-hidden="true"><use href="#i-settings"/></svg>รายงานและโลโก้</button>
+          <button class="sub-btn" role="tab" id="subItemsBtn" data-sub="items" aria-selected="false" tabindex="-1" type="button"><svg class="ic" aria-hidden="true"><use href="#i-list"/></svg>รายการตรวจ</button>
+          <button class="sub-btn" role="tab" id="subRoomsBtn" data-sub="rooms" aria-selected="false" tabindex="-1" type="button"><svg class="ic" aria-hidden="true"><use href="#i-door"/></svg>ห้อง</button>
+          <button class="sub-btn" role="tab" id="subStaffBtn" data-sub="staff" aria-selected="false" tabindex="-1" type="button"><svg class="ic" aria-hidden="true"><use href="#i-user"/></svg>เจ้าหน้าที่</button>
+          <button class="sub-btn d-none" role="tab" id="subAdminsBtn" data-sub="admins" aria-selected="false" tabindex="-1" type="button"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>ผู้ดูแลระบบ</button>
+        </div>
+        <button class="btn btn-quiet btn-icon" type="button" onclick="adminLogout()" aria-label="ออกจากส่วนผู้ดูแล" title="ออกจากส่วนผู้ดูแล"><svg class="ic" aria-hidden="true"><use href="#i-logout"/></svg></button>
+      </div>
+
+      <!-- รายงานและโลโก้ -->
+      <div class="subview is-active card" id="sub-settings" role="tabpanel">
+        <fieldset class="group">
+          <legend>หน่วยงานและโลโก้</legend>
+          <div class="grid grid-2">
+            <div class="field">
+              <label class="lbl" for="s_orgName">ชื่อหน่วยงาน <span class="req">*</span></label>
+              <input type="text" class="ctl" id="s_orgName" maxlength="150">
+            </div>
+            <div class="field">
+              <span class="lbl" id="logoLbl">โลโก้</span>
+              <div class="logo-box">
+                <div class="logo-preview"><img id="logoPreview" alt="ตัวอย่างโลโก้" style="display:none"><span id="logoEmpty">ไม่มีโลโก้</span></div>
+                <div class="logo-actions">
+                  <div class="btns">
+                    <input type="file" class="sr" id="logoFile" accept="image/png,image/jpeg,image/gif,image/webp">
+                    <label class="btn btn-quiet" for="logoFile"><svg class="ic" aria-hidden="true"><use href="#i-image"/></svg>เลือกรูป</label>
+                    <button class="btn btn-danger-quiet" type="button" onclick="clearLogo()"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg>ลบโลโก้</button>
+                  </div>
+                  <input type="text" class="ctl ctl-sm" id="logoUrl" placeholder="หรือวางลิงก์รูป (https://...)" aria-label="ลิงก์รูปโลโก้">
+                  <p class="hint">ระบบย่อรูปให้อัตโนมัติ รองรับ PNG, JPG, GIF, WEBP</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="group">
+          <legend>หัวข้อรายงาน</legend>
+          <div class="grid">
+            <div class="field"><label class="lbl" for="s_reportTitle">หัวข้อหลัก</label><input type="text" class="ctl" id="s_reportTitle" maxlength="200"></div>
+            <div class="field"><label class="lbl" for="s_reportSubtitle">หัวข้อรอง</label><input type="text" class="ctl" id="s_reportSubtitle" maxlength="250"><p class="hint">ใช้ <code>{org}</code> แทนชื่อหน่วยงาน และ <code>{month}</code> แทนเดือน/ปี (พ.ศ.) ที่เลือก</p></div>
+            <div class="field"><label class="lbl" for="s_footerNote">หมายเหตุท้ายรายงาน <span class="hint">(ไม่บังคับ)</span></label><textarea class="ctl" id="s_footerNote" rows="2" maxlength="500"></textarea></div>
+          </div>
+        </fieldset>
+
+        <fieldset class="group">
+          <legend>ผู้ลงชื่อ</legend>
+          <div class="grid">
+            <p class="subhead">ผู้ลงชื่อคนที่ 1</p>
+            <div class="grid grid-3">
+              <div class="field"><label class="lbl" for="s_signer1Label">คำกำกับท้ายชื่อ</label><input type="text" class="ctl" id="s_signer1Label" maxlength="100" placeholder="เช่น ผู้สรุปรายงาน"></div>
+              <div class="field"><label class="lbl" for="s_signer1Name">ชื่อ-สกุล</label><input type="text" class="ctl" id="s_signer1Name" maxlength="100" placeholder="เว้นว่าง = เส้นจุดให้เซ็นเอง"></div>
+              <div class="field"><label class="lbl" for="s_signer1Position">ตำแหน่ง</label><input type="text" class="ctl" id="s_signer1Position" maxlength="150"></div>
+            </div>
+            <p class="subhead">ผู้ลงชื่อคนที่ 2 <span class="hint">(เว้นว่างทั้งหมด = ไม่แสดง)</span></p>
+            <div class="grid grid-3">
+              <div class="field"><label class="lbl" for="s_signer2Label">คำกำกับท้ายชื่อ</label><input type="text" class="ctl" id="s_signer2Label" maxlength="100" placeholder="เช่น ผู้ตรวจสอบ"></div>
+              <div class="field"><label class="lbl" for="s_signer2Name">ชื่อ-สกุล</label><input type="text" class="ctl" id="s_signer2Name" maxlength="100"></div>
+              <div class="field"><label class="lbl" for="s_signer2Position">ตำแหน่ง</label><input type="text" class="ctl" id="s_signer2Position" maxlength="150"></div>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="group">
+          <legend>การจัดหน้ารายงาน</legend>
+          <div class="grid grid-4" style="margin-bottom:6px">
+            <div class="field"><label class="lbl" for="s_orientation">แนวกระดาษ (พิมพ์)</label><select class="ctl" id="s_orientation"><option value="landscape">แนวนอน</option><option value="portrait">แนวตั้ง</option></select></div>
+            <div class="field"><label class="lbl" for="s_headerAlign">การจัดชิดหัวข้อ</label><select class="ctl" id="s_headerAlign"><option value="left">ชิดซ้าย</option><option value="center">กึ่งกลาง</option><option value="right">ชิดขวา</option></select></div>
+            <div class="field"><label class="lbl" for="s_tableFontSize">ขนาดตัวอักษรตาราง (px)</label><input type="number" class="ctl" id="s_tableFontSize" min="10" max="20" inputmode="numeric"></div>
+            <div class="field"><label class="lbl" for="s_logoHeight">ความสูงโลโก้ (px)</label><input type="number" class="ctl" id="s_logoHeight" min="20" max="200" inputmode="numeric"></div>
+          </div>
+          <div class="switches">
+            <label class="switch"><input type="checkbox" class="sr" id="s_showLogo"><span class="track"></span><span>แสดงโลโก้ในรายงาน</span></label>
+            <label class="switch"><input type="checkbox" class="sr" id="s_showLegend"><span class="track"></span><span>แสดงคำอธิบายสัญลักษณ์ ✔ ✘</span></label>
+            <label class="switch"><input type="checkbox" class="sr" id="s_showSignature"><span class="track"></span><span>แสดงช่องลงชื่อ</span></label>
+          </div>
+        </fieldset>
+
+        <div class="form-actions">
+          <button class="btn btn-quiet" type="button" onclick="selectView('monthly')"><svg class="ic" aria-hidden="true"><use href="#i-eye"/></svg>ดูรายงาน</button>
+          <button class="btn btn-ok" id="btnSaveSettings" type="button" onclick="saveSettings()"><svg class="ic" aria-hidden="true"><use href="#i-save"/></svg>บันทึกการตั้งค่า</button>
+        </div>
+      </div>
+
+      <!-- รายการตรวจ -->
+      <div class="subview card" id="sub-items" role="tabpanel">
+        <div class="notice" style="margin-bottom:16px"><svg class="ic" aria-hidden="true"><use href="#i-alert"/></svg><span><b>โปรดทราบ:</b> ผลตรวจเก่าเก็บตามลำดับข้อ การแก้ข้อความของข้อที่มีอยู่จะมีผลกับความหมายของข้อมูลย้อนหลังในข้อนั้น ถ้าต้องการเปลี่ยนเกณฑ์จริง ๆ ให้เพิ่มเป็นข้อใหม่ต่อท้าย ระบบใส่เลขข้อให้เอง และลบได้เฉพาะข้อท้ายสุด</span></div>
+        <div class="list-head" style="margin-top:0"><h2>รายการตรวจ <span class="hint" id="itemCountInfo"></span></h2></div>
+        <div id="itemsEditor"></div>
+        <div class="form-actions" style="margin-top:16px;justify-content:space-between">
+          <button class="btn btn-quiet" id="btnAddItem" type="button" onclick="addItemRow()"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>เพิ่มรายการ</button>
+          <button class="btn btn-ok" id="btnSaveItems" type="button" onclick="saveItems()"><svg class="ic" aria-hidden="true"><use href="#i-save"/></svg>บันทึกรายการตรวจ</button>
+        </div>
+      </div>
+
+      <!-- ห้อง -->
+      <div class="subview card tbl-card" id="sub-rooms" role="tabpanel">
+        <div style="padding:16px 16px 0">
+          <div class="add-row add-room">
+            <input type="text" class="ctl" id="newRoomName" placeholder="ชื่อห้องใหม่ *" maxlength="100" aria-label="ชื่อห้องใหม่" onkeydown="if(event.key==='Enter')addRoom()">
+            <button class="btn btn-ok" type="button" onclick="addRoom()"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>เพิ่มห้อง</button>
+          </div>
+          <p class="hint" style="margin-bottom:12px">เพิ่มหรือแก้ชื่อเจ้าหน้าที่ประจำห้องที่แท็บ “เจ้าหน้าที่”</p>
+        </div>
+        <div class="table-wrap">
+          <table class="tbl tbl-stack tbl-rooms">
+            <thead><tr><th>รหัส</th><th>ห้อง</th><th>เจ้าหน้าที่ประจำห้อง</th><th class="actions"></th></tr></thead>
+            <tbody id="roomListBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- เจ้าหน้าที่ -->
+      <div class="subview card tbl-card" id="sub-staff" role="tabpanel">
+        <div style="padding:16px 16px 0">
+          <div class="add-row">
+            <input type="text" class="ctl" id="newStaffPrefix" list="prefixList" placeholder="คำนำหน้า เช่น น.ส." maxlength="30" aria-label="คำนำหน้า" autocomplete="off">
+            <datalist id="prefixList"></datalist>
+            <input type="text" class="ctl" id="newStaffName" placeholder="ชื่อ-สกุล เจ้าหน้าที่ *" maxlength="100" aria-label="ชื่อ-สกุล เจ้าหน้าที่" onkeydown="if(event.key==='Enter')addStaff()">
+            <select class="ctl" id="newStaffRoom" aria-label="ห้อง"></select>
+            <button class="btn btn-ok" type="button" onclick="addStaff()"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>เพิ่มเจ้าหน้าที่</button>
+          </div>
+          <p class="hint" style="margin-bottom:12px">หนึ่งแถวต่อหนึ่งคน ห้องหนึ่งมีได้หลายคน ถ้าคนเดียวประจำหลายห้องให้เพิ่มหลายแถว เมื่อเลือกห้องในฟอร์มตรวจ ชื่อเจ้าหน้าที่ของห้องนั้นจะถูกใส่ในช่องผู้ตรวจสอบ</p>
+        </div>
+        <div class="table-wrap">
+          <table class="tbl tbl-stack tbl-edit">
+            <thead><tr><th>ชื่อ-สกุล</th><th style="width:34%">ห้อง</th><th class="actions"></th></tr></thead>
+            <tbody id="staffListBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ผู้ดูแลระบบ (เฉพาะผู้ดูแลหลัก) -->
+      <div class="subview card tbl-card" id="sub-admins" role="tabpanel">
+        <div style="padding:16px 16px 0">
+          <div class="add-row add-admin">
+            <input type="text" class="ctl" id="newAdminName" placeholder="ชื่อผู้ดูแล *" maxlength="100" aria-label="ชื่อผู้ดูแล" autocomplete="off">
+            <input type="password" class="ctl" id="newAdminPw" placeholder="รหัสผ่าน (อย่างน้อย 6 ตัว) *" maxlength="100" aria-label="รหัสผ่านผู้ดูแลใหม่" autocomplete="new-password" onkeydown="if(event.key==='Enter')addAdmin()">
+            <button class="btn btn-ok" type="button" onclick="addAdmin()"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>เพิ่มผู้ดูแล</button>
+          </div>
+          <p class="hint" style="margin-bottom:12px">ผู้ดูแลที่เพิ่มเข้าสู่ระบบด้วยรหัสผ่านของตัวเอง และแก้ห้อง เจ้าหน้าที่ รายการตรวจ และหน้ารายงานได้ แต่เพิ่มหรือลบผู้ดูแลไม่ได้ (ทำได้เฉพาะผู้ดูแลหลักที่ใช้รหัสผ่านจากชีต Config เซลล์ A3) ระบบไม่แสดงรหัสผ่านของผู้ดูแลที่เพิ่มแล้ว ถ้าลืมให้ลบแล้วเพิ่มใหม่</p>
+        </div>
+        <div class="table-wrap">
+          <table class="tbl tbl-stack tbl-rooms">
+            <thead><tr><th>รหัส</th><th>ชื่อผู้ดูแล</th><th class="actions"></th></tr></thead>
+            <tbody id="adminListBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+  /*GS-SHIM*/
+  // เรียกเซิร์ฟเวอร์: ถ้าเปิดจากลิงก์ Web App ของ Apps Script ใช้ google.script.run ตามปกติ
+  // ถ้านำไฟล์นี้ไปโฮสต์ที่อื่น (เช่น Netlify) ให้ใส่ URL Web App (ลงท้าย /exec) ที่ API_URL ด้านล่าง
+  var API_URL = 'https://script.google.com/macros/s/AKfycbzO0gCMaF8WmKX60240v4cg0lYSPEM8zYUap8ihjq4Uc6A3OwZRi7zt97Y1rLUarw3-XQ/exec';
+
+  function gsRun() {
+    if (typeof google !== 'undefined' && google.script && google.script.run) return google.script.run;
+    var onOk = null, onErr = null;
+    var proxy;
+    var runner = {
+      withSuccessHandler: function (f) { onOk = f; return proxy; },
+      withFailureHandler: function (f) { onErr = f; return proxy; }
+    };
+    proxy = new Proxy(runner, {
+      get: function (t, name) {
+        if (name in t) return t[name];
+        return function () { apiCall(String(name), Array.prototype.slice.call(arguments), onOk, onErr); };
+      }
+    });
+    return proxy;
+  }
+
+  function apiCall(fn, args, onOk, onErr) {
+    function fail(msg) { if (onErr) onErr(new Error(msg)); }
+    if (!API_URL) {
+      fail('ยังไม่ได้ตั้งค่า API_URL ในไฟล์ (หรือให้เปิดหน้านี้ผ่านลิงก์ Web App ของ Apps Script)');
+      return;
+    }
+    fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // text/plain เพื่อไม่ให้เบราว์เซอร์ส่ง preflight ซึ่ง Apps Script ไม่รองรับ
+      body: JSON.stringify({ fn: fn, args: args }),
+      redirect: 'follow'
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (j && j.ok) { if (onOk) onOk(j.data); }
+        else fail((j && j.error) || 'เซิร์ฟเวอร์ตอบกลับไม่ถูกต้อง');
+      }, function (e) {
+        fail('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ตรวจว่า URL ถูกต้อง และ Deploy เป็น Anyone แล้ว (' + (e && e.message ? e.message : e) + ')');
+      });
+  }
+  /*END-GS-SHIM*/
+
+  var DEFAULT_REPORT = {
+    orgLogo: '', reportTitle: 'รายงานการตรวจอัคคีภัย (ก่อนปิดอาคารสำนักงาน)', reportSubtitle: 'หน่วยงาน {org} ประจำเดือน {month}',
+    footerNote: '', signer1Label: 'ผู้สรุปรายงาน', signer1Name: '', signer1Position: 'เจ้าหน้าที่ความปลอดภัย (จป.วิชาชีพ)',
+    signer2Label: '', signer2Name: '', signer2Position: '', showLogo: true, logoHeight: 60, headerAlign: 'center',
+    tableFontSize: 14, orientation: 'landscape', showLegend: true, showSignature: true
+  };
+  var globalData = { orgName: '', orgLogo: '', rooms: [], items: [], itemTexts: [], staff: [], maxItems: 30, adminReady: false, report: DEFAULT_REPORT };
+  var adminPw = '';
+  var pendingLogo = '';
+  var LOGO_MAX_LEN = 45000;
+  var MONTHS_TH = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+  var DAYS_TH = ["วันอาทิตย์","วันจันทร์","วันอังคาร","วันพุธ","วันพฤหัสบดี","วันศุกร์","วันเสาร์"];
+  var VIEWS = ['check', 'daily', 'monthly', 'admin'];
+  var SUBS = ['settings', 'items', 'rooms', 'staff', 'admins'];
+  var adminIsMain = false;
+
+  // ---------- Utilities ----------
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function $(id) { return document.getElementById(id); }
+  function ico(name) { return '<svg class="ic" aria-hidden="true"><use href="#i-' + name + '"/></svg>'; }
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function fmtDate(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function todayStr() { return fmtDate(new Date()); }
+  function thisMonthStr() { var d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1); }
+  function parseDate(s) { var p = String(s).split('-'); return new Date(+p[0], +p[1] - 1, +p[2] || 1, 12, 0, 0); }
+  function longDate(d) { return DAYS_TH[d.getDay()] + 'ที่ ' + d.getDate() + ' ' + MONTHS_TH[d.getMonth()] + ' ' + (d.getFullYear() + 543); }
+  function isSafeLogo(s) { return /^https?:\/\//i.test(s || '') || /^data:image\/(png|jpeg|gif|webp);base64,/.test(s || ''); }
+  function itemLabel(t) { return String(t == null ? '' : t).replace(/^\s*\d+\s*[.)]\s*/, ''); }
+  function reduceMotion() { return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
+
+  function toast(msg, type) {
+    type = type || 'success';
+    var el = document.createElement('div');
+    el.className = 'toast ' + type;
+    el.innerHTML = ico(type === 'success' ? 'check' : 'alert') + '<span></span>';
+    el.lastChild.textContent = msg;
+    el.addEventListener('click', function () { el.remove(); });
+    $('toastArea').appendChild(el);
+    setTimeout(function () { el.remove(); }, type === 'success' ? 3500 : 6000);
+  }
+  function showLoading(on) { $('loading').style.display = on ? 'flex' : 'none'; }
+  function onFail(err) {
+    showLoading(false);
+    $('btnSave').disabled = false;
+    $('btnSaveSettings').disabled = false;
+    $('btnSaveItems').disabled = false;
+    toast('เกิดข้อผิดพลาด: ' + (err && err.message ? err.message : err), 'danger');
+  }
+
+  // ---------- แท็บ ----------
+  function selectView(name) {
+    VIEWS.forEach(function (v) {
+      var on = v === name;
+      $('tab-' + v).classList.toggle('is-active', on);
+      var b = $('t-' + v);
+      b.classList.toggle('is-active', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+      b.tabIndex = on ? 0 : -1;
+    });
+    if (name === 'daily') loadDailyReport();
+    if (name === 'monthly') loadMonthlyReport();
+    window.scrollTo(0, 0);
+  }
+
+  function selectSub(name) {
+    SUBS.forEach(function (s) {
+      var on = s === name;
+      $('sub-' + s).classList.toggle('is-active', on);
+      var b = document.querySelector('#adminSubTabs [data-sub="' + s + '"]');
+      b.classList.toggle('is-active', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+      b.tabIndex = on ? 0 : -1;
+    });
+  }
+
+  // ใช้ลูกศรซ้าย/ขวา Home End เลื่อนระหว่างแท็บได้
+  function bindTablist(container, attr, onSelect) {
+    container.addEventListener('click', function (e) {
+      var b = e.target.closest('[' + attr + ']');
+      if (b) onSelect(b.getAttribute(attr));
+    });
+    container.addEventListener('keydown', function (e) {
+      var tabs = Array.prototype.slice.call(container.querySelectorAll('[' + attr + ']'));
+      var i = tabs.indexOf(document.activeElement);
+      if (i < 0) return;
+      var j = e.key === 'ArrowRight' ? (i + 1) % tabs.length : e.key === 'ArrowLeft' ? (i + tabs.length - 1) % tabs.length : e.key === 'Home' ? 0 : e.key === 'End' ? tabs.length - 1 : -1;
+      if (j < 0) return;
+      e.preventDefault();
+      tabs[j].focus();
+      onSelect(tabs[j].getAttribute(attr));
+    });
+  }
+
+  // ---------- Init ----------
+  document.addEventListener('DOMContentLoaded', function () {
+    $('todayLabel').textContent = longDate(new Date());
+    $('dailyDate').value = todayStr();
+    $('reportMonth').value = thisMonthStr();
+    bindTablist($('mainTabs'), 'data-view', selectView);
+    bindTablist($('adminSubTabs'), 'data-sub', selectSub);
+
+    $('staffListBody').addEventListener('change', function (e) {
+      var row = e.target.closest('tr[data-staff]');
+      if (!row) return;
+      var id = row.getAttribute('data-staff');
+      var name = row.querySelector('input[data-staff-name]').value.trim();
+      var roomId = row.querySelector('select[data-staff-room]').value;
+      if (!name) { toast('กรุณากรอกชื่อเจ้าหน้าที่', 'warning'); renderStaffList(); return; }
+      runStaffAction('update', { id: id, name: name, roomId: roomId });
+    });
+    $('staffListBody').addEventListener('click', function (e) {
+      var btn = e.target.closest('button[data-del-staff]');
+      if (!btn) return;
+      var row = btn.closest('tr[data-staff]');
+      var name = row.querySelector('input[data-staff-name]').value;
+      if (!confirm('ต้องการลบเจ้าหน้าที่ "' + name + '" ใช่หรือไม่?')) return;
+      runStaffAction('delete', { id: row.getAttribute('data-staff') });
+    });
+    $('roomSelect').addEventListener('change', onRoomChange);
+    $('logoFile').addEventListener('change', onLogoFile);
+    $('itemsEditor').addEventListener('input', function (e) {
+      var i = e.target.getAttribute('data-item');
+      if (i !== null) itemDraft[parseInt(i, 10)] = e.target.value;
+    });
+    $('itemsEditor').addEventListener('click', function (e) {
+      if (e.target.closest('[data-rm-item]') && itemDraft.length > 1) {
+        itemDraft.pop();
+        renderItemsEditor();
+      }
+    });
+    $('logoUrl').addEventListener('input', function () {
+      pendingLogo = $('logoUrl').value.trim();
+      updateLogoPreview();
+    });
+    // แตะช่องความคืบหน้าเพื่อข้ามไปยังข้อนั้น
+    document.addEventListener('click', function (e) {
+      var g = e.target.closest('[data-goto]');
+      if (g) scrollToItem(parseInt(g.getAttribute('data-goto'), 10));
+    });
+
+    gsRun().withSuccessHandler(onAppData).withFailureHandler(onFail).getAppData();
+  });
+
+  function onAppData(data) {
+    globalData = data;
+    if (!globalData.report) globalData.report = DEFAULT_REPORT;
+    applyOrgAndLogo();
+    fillRooms();
+    buildChecklist();
+    applyReportLayout();
+    renderReportHeader();
+    refreshDayDot();
+    $('adminNotReady').classList.toggle('d-none', !!data.adminReady);
+    showLoading(false);
+  }
+
+  function applyOrgAndLogo() {
+    $('navOrg').textContent = globalData.orgName || '';
+    var logo = globalData.orgLogo || '';
+    var has = isSafeLogo(logo);
+    if (has) $('navLogo').src = logo; else $('navLogo').removeAttribute('src');
+    $('navLogo').classList.toggle('d-none', !has);
+    $('brandSign').classList.toggle('d-none', has);
+  }
+
+  function fillRooms() {
+    var sel = $('roomSelect');
+    var current = sel.value;
+    var html = '<option value="">-- เลือกห้อง --</option>';
+    globalData.rooms.forEach(function (r) {
+      html += '<option value="' + esc(r.id) + '">' + esc(r.name) + '</option>';
+    });
+    sel.innerHTML = html;
+    sel.value = current;
+    if (!globalData.rooms.length) {
+      sel.innerHTML = '<option value="">ยังไม่มีห้อง เพิ่มได้ที่ ตั้งค่า &gt; ห้อง</option>';
+    }
+  }
+
+  // ---------- เจ้าหน้าที่ประจำห้อง -> ช่องผู้ตรวจสอบ ----------
+  var autoInspector = '';   // ชื่อที่ระบบเติมให้ครั้งล่าสุด (ใช้แยกจากชื่อที่ผู้ใช้พิมพ์เอง)
+
+  // ช่องเจ้าหน้าที่ประจำห้องใส่ได้หลายคน คั่นด้วย , ; หรือขึ้นบรรทัดใหม่
+  function splitStaff(s) {
+    return String(s || '').split(/[,;\n]+/).map(function (x) { return x.trim(); }).filter(Boolean);
+  }
+
+  function onRoomChange() {
+    var id = $('roomSelect').value;
+    var room = globalData.rooms.filter(function (r) { return r.id === id; })[0];
+    var names = room ? (room.staff || splitStaff(room.owner)) : [];
+
+    $('staffList').innerHTML = names.map(function (n) { return '<option value="' + esc(n) + '"></option>'; }).join('');
+
+    var box = $('inspector');
+    var next = names.length === 1 ? names[0] : '';
+    // เปลี่ยนค่าให้เฉพาะเมื่อช่องว่าง หรือเป็นชื่อที่ระบบเติมไว้เอง ไม่ทับชื่อที่ผู้ใช้พิมพ์
+    if (box.value.trim() === '' || box.value === autoInspector) {
+      box.value = next;
+      autoInspector = next;
+    }
+    box.placeholder = names.length > 1 ? 'เลือกหรือพิมพ์ชื่อ (' + names.length + ' คนในห้องนี้)' : 'ชื่อ-นามสกุล';
+  }
+
+  // ---------- Checklist ----------
+  function buildChecklist() {
+    var html = '';
+    globalData.items.forEach(function (text, i) {
+      html += '<div class="item" id="row_' + i + '">' +
+        '<div class="item-head"><span class="item-no">' + (i + 1) + '</span><p class="item-text">' + esc(itemLabel(text)) + '</p></div>' +
+        '<div class="seg3" role="radiogroup" aria-label="ข้อ ' + (i + 1) + '">' +
+        radio(i, 'ปกติ', 'ok', 'check') + radio(i, 'ไม่ปกติ', 'bad', 'x') + radio(i, 'ไม่มี', 'na', 'minus') +
+        '</div></div>';
+    });
+    $('checklist').innerHTML = html;
+    $('itemCountLabel').textContent = globalData.items.length;
+    if (!$('checklist').dataset.bound) {
+      $('checklist').dataset.bound = '1';
+      $('checklist').addEventListener('change', function (e) {
+        if (/^item_\d+$/.test(e.target.name || '')) updateProgress();
+      });
+    }
+    updateProgress();
+  }
+  function radio(i, val, kind, icon) {
+    var id = 'item_' + i + '_' + val;
+    return '<input type="radio" class="sr" name="item_' + i + '" id="' + id + '" value="' + val + '">' +
+           '<label class="opt opt-' + kind + '" for="' + id + '"><span class="badge">' + ico(icon) + '</span>' + val + '</label>';
+  }
+
+  function answerOf(i) {
+    var c = document.querySelector('input[name="item_' + i + '"]:checked');
+    return c ? c.value : '';
+  }
+
+  // อัปเดตสีสถานะของแต่ละข้อ แถบความคืบหน้า และตัวนับ
+  function updateProgress() {
+    var n = globalData.items.length, answered = 0, bad = 0, grid = '', mini = '';
+    for (var i = 0; i < n; i++) {
+      var v = answerOf(i);
+      var cls = v === 'ปกติ' ? 'ok' : v === 'ไม่ปกติ' ? 'bad' : v === 'ไม่มี' ? 'na' : '';
+      if (v) answered++;
+      if (v === 'ไม่ปกติ') bad++;
+      var row = $('row_' + i);
+      if (row) {
+        row.classList.toggle('is-ok', v === 'ปกติ');
+        row.classList.toggle('is-bad', v === 'ไม่ปกติ');
+        if (v) row.classList.remove('is-missing');
+      }
+      var lab = 'ข้อ ' + (i + 1) + (v ? ' ' + v : ' ยังไม่ได้ตอบ');
+      grid += '<button type="button" class="pg ' + cls + '" data-goto="' + i + '" aria-label="' + lab + '">' + (i + 1) + '</button>';
+      mini += '<button type="button" class="pm ' + cls + '" data-goto="' + i + '" tabindex="-1" aria-label="' + lab + '"></button>';
+    }
+    $('punchGrid').innerHTML = grid;
+    $('punchMini').innerHTML = mini;
+    var txt = answered + ' / ' + n;
+    $('progText').textContent = txt;
+    $('miniText').textContent = txt;
+    $('saveInfo').textContent = txt;
+    var chip = $('badChip');
+    chip.textContent = 'ไม่ปกติ ' + bad + ' ข้อ';
+    chip.classList.toggle('d-none', !bad);
+    $('noteReq').classList.toggle('is-on', bad > 0);
+  }
+
+  function scrollToItem(i) {
+    var row = $('row_' + i);
+    if (!row) return;
+    row.scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'center' });
+    row.classList.remove('is-flash');
+    void row.offsetWidth;
+    row.classList.add('is-flash');
+  }
+
+  // เติม "ปกติ" ให้เฉพาะข้อที่ยังไม่ได้ตอบ (ข้อที่ตอบแล้ว เช่น ไม่ปกติ จะไม่ถูกเปลี่ยน)
+  function setAllNormal() {
+    globalData.items.forEach(function (_, i) {
+      if (!answerOf(i)) $('item_' + i + '_ปกติ').checked = true;
+    });
+    updateProgress();
+  }
+
+  function submitChecklist() {
+    var roomId = $('roomSelect').value;
+    var inspector = $('inspector').value.trim();
+    var note = $('note').value.trim();
+    if (!roomId) { toast('กรุณาเลือกห้อง', 'warning'); $('roomSelect').focus(); return; }
+    if (!inspector) { toast('กรุณากรอกชื่อผู้ตรวจสอบ', 'warning'); $('inspector').focus(); return; }
+
+    var results = [], firstMissing = null, missing = 0, hasBad = false;
+    globalData.items.forEach(function (_, i) {
+      var v = answerOf(i);
+      if (!v) {
+        $('row_' + i).classList.add('is-missing');
+        missing++;
+        if (firstMissing === null) firstMissing = i;
+      } else {
+        results.push(v);
+        if (v === 'ไม่ปกติ') hasBad = true;
+      }
+    });
+    if (firstMissing !== null) {
+      toast('ยังไม่ได้ตอบ ' + missing + ' ข้อ (ไฮไลต์สีเหลืองไว้ให้แล้ว)', 'warning');
+      scrollToItem(firstMissing);
+      return;
+    }
+    if (hasBad && !note) { toast('พบข้อที่ไม่ปกติ กรุณาระบุรายละเอียดในหมายเหตุ', 'warning'); $('note').focus(); return; }
+
+    var roomName = ($('roomSelect').selectedOptions[0] || {}).textContent || '';
+    $('btnSave').disabled = true;
+    gsRun()
+      .withSuccessHandler(function (res) {
+        $('btnSave').disabled = false;
+        if (res.status === 'success') {
+          toast(res.message + ' (' + roomName + ')', 'success');
+          if (hasBad) {
+            var nBad = results.filter(function (v) { return v === 'ไม่ปกติ'; }).length;
+            toast('แจ้งเตือน: ' + roomName + ' พบข้อไม่ปกติ ' + nBad + ' ข้อ บันทึกในสรุปประจำวันแล้ว', 'warning');
+          }
+          refreshDayDot();
+          resetForm();
+        } else {
+          toast(res.message, 'danger');
+        }
+      })
+      .withFailureHandler(onFail)
+      .saveChecklist({ roomId: roomId, inspector: inspector, results: results, note: note });
+  }
+
+  function resetForm() {
+    $('roomSelect').value = '';
+    onRoomChange();
+    $('note').value = '';
+    globalData.items.forEach(function (_, i) {
+      document.querySelectorAll('input[name="item_' + i + '"]').forEach(function (r) { r.checked = false; });
+      $('row_' + i).classList.remove('is-missing', 'is-ok', 'is-bad');
+    });
+    updateProgress();
+    window.scrollTo({ top: 0, behavior: reduceMotion() ? 'auto' : 'smooth' });
+  }
+
+  // ---------- รายงานรายวัน ----------
+  function shiftDay(delta) {
+    var d = parseDate($('dailyDate').value || todayStr());
+    d.setDate(d.getDate() + delta);
+    $('dailyDate').value = fmtDate(d);
+    loadDailyReport();
+  }
+  function goToday() { $('dailyDate').value = todayStr(); loadDailyReport(); }
+
+  function loadDailyReport() {
+    var d = $('dailyDate').value || todayStr();
+    $('dailyDateLabel').textContent = longDate(parseDate(d));
+    gsRun().withSuccessHandler(function (r) {
+      $('dTotal').textContent = r.total;
+      $('dChecked').textContent = r.checkedCount;
+      $('dUnchecked').textContent = r.unchecked.length;
+      $('statUnchecked').classList.toggle('is-zero', r.unchecked.length === 0);
+      $('statUnchecked').classList.toggle('is-bad', r.unchecked.length > 0);
+      var pct = r.total ? Math.round(r.checkedCount * 100 / r.total) : 0;
+      $('dProgress').style.width = pct + '%';
+      $('dPercent').textContent = pct + '%';
+
+      $('dUncheckedBody').innerHTML = r.unchecked.length
+        ? r.unchecked.map(function (x) {
+            return '<tr><td data-label="รหัส">' + esc(x.id) + '</td><td data-label="ห้อง"><strong>' + esc(x.name) + '</strong></td><td data-label="เจ้าหน้าที่ประจำห้อง">' + (esc(x.owner) || '<span class="hint">ยังไม่ระบุ</span>') + '</td></tr>';
+          }).join('')
+        : '<tr class="empty"><td colspan="3"><span class="empty-ok">' + ico('check') + (r.total ? 'ตรวจครบทุกห้องแล้ว' : 'ยังไม่มีห้อง') + '</span></td></tr>';
+
+      // เซิร์ฟเวอร์รุ่นเก่า (ยังไม่ได้ Deploy Code.js ตัวใหม่) ไม่ส่ง notes มา: แปลงจาก abnormal แทน และเตือนให้ Deploy ใหม่
+      if (!r.notes) {
+        r.notes = (r.abnormal || []).map(function (x) {
+          return { date: r.date, time: '', roomId: x.roomId, roomName: x.roomName, inspector: x.inspector, status: 'bad', note: x.note,
+                   items: (x.items || []).map(function (n) { return { no: n, text: (globalData.itemTexts || [])[n - 1] || '' }; }) };
+        });
+        toast('เซิร์ฟเวอร์ (Apps Script) ยังเป็นเวอร์ชันเก่า กรุณา Deploy Code.js ตัวใหม่', 'warning');
+      }
+      dailyData = r;
+      var bad = r.notes.filter(function (x) { return x.status === 'bad'; });
+      var badRooms = {};
+      bad.forEach(function (x) { badRooms[x.roomId] = 1; });
+      var nBadRooms = Object.keys(badRooms).length;
+      var al = $('dAlert');
+      al.classList.remove('d-none');
+      al.classList.toggle('is-clear', nBadRooms === 0);
+      $('dAlertText').innerHTML = nBadRooms
+        ? '<b>พบข้อไม่ปกติ ' + nBadRooms + ' ห้อง</b>' + esc(bad.map(function (x) { return x.roomName; }).filter(function (v, i, a) { return a.indexOf(v) === i; }).join(', ')) + ' — ดูรายละเอียดและหมายเหตุด้านล่าง'
+        : '<b>ไม่พบข้อไม่ปกติ</b>' + (r.checkedCount ? 'ห้องที่ตรวจแล้วทุกห้องปกติ' : 'ยังไม่มีการตรวจในวันนี้');
+      if (d === todayStr()) setDayDot(nBadRooms);
+
+      $('dAbnormalBody').innerHTML = r.notes.length
+        ? r.notes.map(function (x) {
+            var fails = x.items.length ? x.items.map(function (it) {
+              return '<div class="fail"><span class="chip chip-bad">' + esc(it.no) + '</span><span>' + esc(itemLabel(it.text)) + '</span></div>';
+            }).join('') : '<span class="chip chip-ok">ปกติทุกข้อ</span>';
+            return '<tr><td data-label="ห้อง"><strong>' + esc(x.roomName) + '</strong></td><td data-label="ข้อที่ไม่ปกติ">' + fails + '</td>' +
+                   '<td data-label="หมายเหตุ"><span class="note-text">' + (esc(x.note) || '—') + '</span></td>' +
+                   '<td data-label="ผู้ตรวจ / เวลา">' + esc(x.inspector) + ' <span class="hint">' + esc(x.time) + ' น.</span></td></tr>';
+          }).join('')
+        : '<tr class="empty"><td colspan="4">ไม่มีข้อไม่ปกติหรือหมายเหตุ</td></tr>';
+    }).withFailureHandler(onFail).getDailyUncheckedReport(d);
+  }
+
+  var dailyData = null;
+
+  function setDayDot(n) {
+    var dot = $('dayDot');
+    dot.textContent = n > 99 ? '99+' : n;
+    dot.classList.toggle('d-none', !n);
+  }
+  // แจ้งเตือนบนเมนู "รายวัน": จำนวนห้องที่พบข้อไม่ปกติของวันนี้
+  function refreshDayDot() {
+    gsRun().withSuccessHandler(function (r) {
+      var rooms = {};
+      (r.notes || []).forEach(function (x) { if (x.status === 'bad') rooms[x.roomId] = 1; });
+      setDayDot(Object.keys(rooms).length);
+    }).withFailureHandler(function () {}).getDailyUncheckedReport(todayStr());
+  }
+
+  function thaiShort(ds) { var d = parseDate(ds); return d.getDate() + ' ' + MONTHS_TH[d.getMonth()] + ' ' + (d.getFullYear() + 543); }
+
+  // ข้อความสรุปประจำวัน สำหรับวางในไลน์/เอกสารรายงาน
+  function dailySummaryText() {
+    var r = dailyData;
+    if (!r) return '';
+    var L = [];
+    L.push('สรุปผลตรวจป้องกันอัคคีภัย' + (globalData.orgName ? ' ' + globalData.orgName : ''));
+    L.push('วันที่ ' + thaiShort(r.date));
+    L.push('ตรวจแล้ว ' + r.checkedCount + ' / ' + r.total + ' ห้อง' + (r.unchecked.length ? ' (ยังไม่ตรวจ ' + r.unchecked.length + ' ห้อง)' : ''));
+    if (r.unchecked.length) L.push('ยังไม่ตรวจ: ' + r.unchecked.map(function (x) { return x.name; }).join(', '));
+    var bad = r.notes.filter(function (x) { return x.status === 'bad'; });
+    var oth = r.notes.filter(function (x) { return x.status !== 'bad'; });
+    L.push('');
+    if (bad.length) {
+      L.push('ข้อไม่ปกติ ' + bad.length + ' รายการ:');
+      bad.forEach(function (x, i) {
+        L.push((i + 1) + ') ' + x.roomName + ' — ' + x.items.map(function (it) { return 'ข้อ ' + it.no + ' ' + itemLabel(it.text); }).join('; '));
+        if (x.note) L.push('   หมายเหตุ: ' + x.note);
+        L.push('   ผู้ตรวจ: ' + x.inspector + ' (' + x.time + ' น.)');
+      });
+    } else {
+      L.push('ไม่พบข้อไม่ปกติ');
+    }
+    if (oth.length) {
+      L.push('');
+      L.push('หมายเหตุอื่น ๆ:');
+      oth.forEach(function (x) { L.push('- ' + x.roomName + ': ' + x.note + ' (' + x.inspector + ')'); });
+    }
+    return L.join('\n');
+  }
+
+  function copyDailySummary() {
+    var text = dailySummaryText();
+    if (!text) { toast('ยังไม่มีข้อมูลสรุป', 'warning'); return; }
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) {}
+      ta.remove();
+      toast(ok ? 'คัดลอกสรุปแล้ว นำไปวางได้เลย' : 'คัดลอกไม่สำเร็จ', ok ? 'success' : 'danger');
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { toast('คัดลอกสรุปแล้ว นำไปวางได้เลย', 'success'); }, fallback);
+    } else { fallback(); }
+  }
+
+  // CSV: ใส่ ' นำหน้าเซลล์ที่ขึ้นต้นด้วย = + - @ กัน Excel ตีเป็นสูตร และใส่ BOM ให้ Excel อ่านภาษาไทยถูก
+  function csvCell(v) {
+    v = String(v == null ? '' : v);
+    if (/^[=+\-@\t\r]/.test(v)) v = "'" + v;
+    return '"' + v.replace(/"/g, '""') + '"';
+  }
+  function downloadNotesCsv(scope) {
+    var d = $('dailyDate').value || todayStr();
+    var from = d, to = d;
+    if (scope === 'month') {
+      var p = d.split('-');
+      from = p[0] + '-' + p[1] + '-01';
+      to = p[0] + '-' + p[1] + '-' + pad(new Date(+p[0], +p[1], 0).getDate());
+    }
+    gsRun().withSuccessHandler(function (res) {
+      if (res.status !== 'success') { toast(res.message, 'danger'); return; }
+      if (!res.rows.length) { toast('ช่วงนี้ไม่มีข้อไม่ปกติหรือหมายเหตุ', 'warning'); return; }
+      var head = ['วันที่', 'เวลา', 'รหัสห้อง', 'ห้อง', 'ผู้ตรวจ', 'สถานะ', 'ข้อที่ไม่ปกติ (เลขข้อ)', 'ข้อที่ไม่ปกติ (รายการ)', 'หมายเหตุ'];
+      var lines = [head.map(csvCell).join(',')];
+      res.rows.forEach(function (x) {
+        lines.push([x.date, x.time, x.roomId, x.roomName, x.inspector, x.status === 'bad' ? 'พบข้อไม่ปกติ' : 'หมายเหตุ',
+          x.items.map(function (i) { return i.no; }).join(' '),
+          x.items.map(function (i) { return i.no + '. ' + itemLabel(i.text); }).join(' | '), x.note].map(csvCell).join(','));
+      });
+      var blob = new Blob(['\ufeff' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'fire-inspection-notes_' + (scope === 'month' ? d.slice(0, 7) : d) + '.csv';
+      document.body.appendChild(a); a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+      toast('ดาวน์โหลดไฟล์ CSV แล้ว (' + res.rows.length + ' รายการ)', 'success');
+    }).withFailureHandler(onFail).getNotesReport(from, to);
+  }
+
+  // ---------- รายงานรายเดือน ----------
+  function shiftMonth(delta) {
+    var ym = $('reportMonth').value || thisMonthStr();
+    var p = ym.split('-');
+    var d = new Date(+p[0], +p[1] - 1 + delta, 1);
+    $('reportMonth').value = d.getFullYear() + '-' + pad(d.getMonth() + 1);
+    loadMonthlyReport();
+  }
+
+  function monthText(ym) {
+    if (!ym) return '..................';
+    var p = ym.split('-');
+    return MONTHS_TH[parseInt(p[1], 10) - 1] + ' พ.ศ. ' + (parseInt(p[0], 10) + 543);
+  }
+
+  // หัวรายงาน: โลโก้ + หัวข้อหลัก + หัวข้อรอง (แทนค่า {org} {month})
+  function renderReportHeader() {
+    var rs = globalData.report || DEFAULT_REPORT;
+    var org = globalData.orgName || '.........................................';
+    var month = monthText($('reportMonth').value);
+    var sub = String(rs.reportSubtitle || '').split('{org}').join(org).split('{month}').join(month);
+
+    var html = '';
+    if (rs.showLogo && isSafeLogo(globalData.orgLogo)) {
+      html += '<div><img class="report-logo" src="' + esc(globalData.orgLogo) + '" alt="" style="height:' + parseInt(rs.logoHeight, 10) + 'px"></div>';
+    }
+    if (rs.reportTitle) html += '<h2 class="rep-title">' + esc(rs.reportTitle) + '</h2>';
+    if (sub) html += '<p class="rep-sub">' + esc(sub) + '</p>';
+    $('reportHeader').style.textAlign = rs.headerAlign || 'center';
+    $('reportHeader').innerHTML = html;
+  }
+
+  function signerHtml(label, name, position) {
+    return '<div class="sign-block">' +
+      '<p>ลงชื่อ............................................................' + esc(label) + '</p>' +
+      '<p>(' + (name ? esc(name) : '............................................................') + ')</p>' +
+      '<p>ตำแหน่ง ' + (position ? esc(position) : '............................................................') + '</p>' +
+      '</div>';
+  }
+
+  // ใช้ค่าตั้งค่าที่ไม่ขึ้นกับเดือน: ขนาดตัวอักษร ส่วนลงชื่อ คำอธิบาย หมายเหตุ แนวกระดาษ
+  function applyReportLayout() {
+    var rs = globalData.report || DEFAULT_REPORT;
+    $('monthlyTable').style.fontSize = (parseInt(rs.tableFontSize, 10) || 14) + 'px';
+    $('reportLegend').style.display = rs.showLegend ? '' : 'none';
+    $('reportFooterNote').textContent = rs.footerNote || '';
+    $('reportFooterNote').style.display = rs.footerNote ? '' : 'none';
+
+    var sig = '';
+    if (rs.showSignature) {
+      sig += signerHtml(rs.signer1Label, rs.signer1Name, rs.signer1Position);
+      if (rs.signer2Label || rs.signer2Name || rs.signer2Position) {
+        sig += signerHtml(rs.signer2Label, rs.signer2Name, rs.signer2Position);
+      }
+      sig = '<div class="sign-wrap">' + sig + '</div>';
+    }
+    $('reportSignature').innerHTML = sig;
+
+    var orient = rs.orientation === 'portrait' ? 'portrait' : 'landscape';
+    $('pageStyle').textContent = '@page { size: A4 ' + orient + '; margin: 10mm; }';
+  }
+
+  function loadMonthlyReport() {
+    var ym = $('reportMonth').value;
+    if (!ym) return;
+    renderReportHeader();
+    applyReportLayout();
+
+    var parts = ym.split('-');
+    var year = parseInt(parts[0], 10), month = parseInt(parts[1], 10);
+
+    gsRun().withSuccessHandler(function (data) {
+      var daysInMonth = new Date(year, month, 0).getDate();
+      var DOW = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
+      function wk(d) { var w = new Date(year, month - 1, d).getDay(); return w === 0 ? 'sun' : w === 6 ? 'sat' : ''; }
+      var html = '<thead><tr><th scope="col" rowspan="1">ห้อง / วันที่</th>';
+      for (var d = 1; d <= daysInMonth; d++) html += '<th scope="col" class="' + wk(d) + '">' + d + '</th>';
+      html += '</tr><tr class="dow"><th></th>';
+      for (var d = 1; d <= daysInMonth; d++) html += '<th class="' + wk(d) + '">' + DOW[new Date(year, month - 1, d).getDay()] + '</th>';
+      html += '</tr></thead><tbody>';
+
+      if (!data.rooms.length) {
+        html += '<tr><td colspan="' + (daysInMonth + 1) + '" style="text-align:left;color:var(--ink-3)">ยังไม่มีห้อง</td></tr>';
+      }
+      data.rooms.forEach(function (r) {
+        html += '<tr><th scope="row">' + esc(r.name) + '</th>';
+        for (var d = 1; d <= daysInMonth; d++) {
+          var v = data.logs[r.id + '_' + d];
+          if (v === 'ok') html += '<td class="mark-ok ' + wk(d) + '">✔</td>';
+          else if (v === 'bad') html += '<td class="mark-bad">✘</td>';
+          else html += '<td class="' + wk(d) + '"></td>';
+        }
+        html += '</tr>';
+      });
+      html += '</tbody>';
+      $('monthlyTable').innerHTML = html;
+    }).withFailureHandler(onFail).getMonthlySummary(ym);
+  }
+
+  // ย่อรายงานให้พอดี 1 หน้า A4 ตามแนวกระดาษที่ตั้งไว้ (ทำก่อนพิมพ์ทุกครั้ง)
+  function fitReportToPage() {
+    var sheet = document.querySelector('#tab-monthly .sheet');
+    if (!sheet) return;
+    var land = (globalData.report || DEFAULT_REPORT).orientation !== 'portrait';
+    var MM = 96 / 25.4;
+    var pw = (land ? 277 : 190) * MM, ph = (land ? 190 : 277) * MM - 4;
+    sheet.style.zoom = ''; sheet.style.width = pw + 'px';
+    var z = 1;
+    for (var i = 0; i < 4; i++) {
+      sheet.style.width = (pw / z) + 'px';
+      sheet.style.zoom = z;
+      var h = sheet.getBoundingClientRect().height;
+      if (h <= ph) break;
+      z = Math.max(0.35, z * ph / h * 0.99);
+    }
+    // ห้องน้อย: ขยายความสูงแถวให้รายงานเต็มหน้า (ไม่เกินที่ดูพอดี)
+    var rows = sheet.querySelectorAll('.matrix tbody tr');
+    var h2 = sheet.getBoundingClientRect().height;
+    if (rows.length && h2 < ph) {
+      var extra = Math.min(10, ((ph - h2) * 0.92 / z) / rows.length / 2);
+      if (extra > 0.5) rows.forEach(function (tr) {
+        tr.querySelectorAll('th,td').forEach(function (c) { c.style.paddingTop = c.style.paddingBottom = (2 + extra) + 'px'; });
+      });
+    }
+  }
+  function unfitReport() {
+    var sheet = document.querySelector('#tab-monthly .sheet');
+    if (!sheet) return;
+    sheet.style.zoom = ''; sheet.style.width = '';
+    sheet.querySelectorAll('.matrix tbody th, .matrix tbody td').forEach(function (c) { c.style.paddingTop = c.style.paddingBottom = ''; });
+  }
+  window.addEventListener('beforeprint', fitReportToPage);
+  window.addEventListener('afterprint', unfitReport);
+
+  // ปุ่ม "ปรับแต่ง" ในหน้ารายงาน -> ไปแท็บตั้งค่า
+  function goSettings() {
+    selectView('admin');
+    if (adminPw) selectSub('settings');
+  }
+
+  // ---------- ส่วนผู้ดูแล ----------
+  function adminLogin() {
+    var pw = $('adminPw').value;
+    if (!pw) { toast('กรุณากรอกรหัสผ่าน', 'warning'); return; }
+    gsRun().withSuccessHandler(function (res) {
+      if (res.status === 'success') {
+        adminPw = pw;
+        adminIsMain = !!res.isMain;
+        $('subAdminsBtn').classList.toggle('d-none', !adminIsMain);
+        if (adminIsMain) loadAdmins();
+        $('adminPw').value = '';
+        $('adminLogin').classList.add('d-none');
+        $('adminPanel').classList.remove('d-none');
+        fillSettingsForm();
+        fillItemsForm();
+        renderRoomList();
+        renderStaffList();
+        selectSub('settings');
+      } else {
+        toast(res.message, 'danger');
+      }
+    }).withFailureHandler(onFail).checkAdmin(pw);
+  }
+
+  function adminLogout() {
+    adminPw = '';
+    adminIsMain = false;
+    $('subAdminsBtn').classList.add('d-none');
+    $('adminListBody').innerHTML = '';
+    $('adminPanel').classList.add('d-none');
+    $('adminLogin').classList.remove('d-none');
+  }
+
+  // ---------- ตั้งค่ารายงาน ----------
+  var TEXT_FIELDS = ['reportTitle', 'reportSubtitle', 'footerNote', 'signer1Label', 'signer1Name', 'signer1Position', 'signer2Label', 'signer2Name', 'signer2Position'];
+  var CHECK_FIELDS = ['showLogo', 'showLegend', 'showSignature'];
+
+  function fillSettingsForm() {
+    var rs = globalData.report || DEFAULT_REPORT;
+    $('s_orgName').value = globalData.orgName || '';
+    TEXT_FIELDS.forEach(function (k) { $('s_' + k).value = rs[k] || ''; });
+    CHECK_FIELDS.forEach(function (k) { $('s_' + k).checked = !!rs[k]; });
+    $('s_logoHeight').value = rs.logoHeight;
+    $('s_tableFontSize').value = rs.tableFontSize;
+    $('s_headerAlign').value = rs.headerAlign;
+    $('s_orientation').value = rs.orientation;
+    pendingLogo = globalData.orgLogo || '';
+    $('logoFile').value = '';
+    $('logoUrl').value = /^https?:\/\//i.test(pendingLogo) ? pendingLogo : '';
+    updateLogoPreview();
+  }
+
+  function updateLogoPreview() {
+    var ok = isSafeLogo(pendingLogo);
+    var img = $('logoPreview');
+    if (ok) img.src = pendingLogo; else img.removeAttribute('src');
+    img.style.display = ok ? '' : 'none';
+    $('logoEmpty').style.display = ok ? 'none' : '';
+  }
+
+  function clearLogo() {
+    pendingLogo = '';
+    $('logoFile').value = '';
+    $('logoUrl').value = '';
+    updateLogoPreview();
+  }
+
+  function onLogoFile(e) {
+    var f = e.target.files && e.target.files[0];
+    if (!f) return;
+    if (!/^image\/(png|jpeg|gif|webp)$/.test(f.type)) {
+      toast('รองรับเฉพาะไฟล์ PNG, JPG, GIF, WEBP', 'warning');
+      e.target.value = '';
+      return;
+    }
+    var reader = new FileReader();
+    reader.onerror = function () { toast('อ่านไฟล์ไม่สำเร็จ', 'danger'); };
+    reader.onload = function () {
+      var img = new Image();
+      img.onerror = function () { toast('ไฟล์รูปไม่ถูกต้อง', 'danger'); };
+      img.onload = function () {
+        var out = shrinkImage(img);
+        if (!out) { toast('ไม่สามารถย่อรูปให้เล็กพอได้ กรุณาใช้รูปอื่น', 'danger'); return; }
+        pendingLogo = out;
+        $('logoUrl').value = '';
+        updateLogoPreview();
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(f);
+  }
+
+  // ย่อรูปด้วย canvas ให้ขนาดไฟล์ไม่เกินที่เซลล์ในชีตเก็บได้ (ลองใช้ PNG ก่อน แล้วค่อย JPEG และลดขนาดลงเรื่อย ๆ)
+  function shrinkImage(img) {
+    var size = 300;
+    while (size >= 60) {
+      var scale = Math.min(1, size / Math.max(img.width, img.height));
+      var w = Math.max(1, Math.round(img.width * scale));
+      var h = Math.max(1, Math.round(img.height * scale));
+
+      var c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      var png = c.toDataURL('image/png');
+      if (png.length <= LOGO_MAX_LEN) return png;
+
+      var c2 = document.createElement('canvas');
+      c2.width = w; c2.height = h;
+      var ctx = c2.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, w, h);
+      ctx.drawImage(img, 0, 0, w, h);
+      var jpg = c2.toDataURL('image/jpeg', 0.85);
+      if (jpg.length <= LOGO_MAX_LEN) return jpg;
+
+      size = Math.round(size * 0.75);
+    }
+    return '';
+  }
+
+  function saveSettings() {
+    var orgName = $('s_orgName').value.trim();
+    if (!orgName) { toast('กรุณากรอกชื่อหน่วยงาน', 'warning'); $('s_orgName').focus(); return; }
+
+    var logo = pendingLogo;
+    if (logo && !isSafeLogo(logo)) { toast('ลิงก์โลโก้ต้องขึ้นต้นด้วย http:// หรือ https://', 'warning'); return; }
+
+    var s = { orgName: orgName, orgLogo: logo };
+    TEXT_FIELDS.forEach(function (k) { s[k] = $('s_' + k).value.trim(); });
+    CHECK_FIELDS.forEach(function (k) { s[k] = $('s_' + k).checked; });
+    s.logoHeight = parseInt($('s_logoHeight').value, 10) || 60;
+    s.tableFontSize = parseInt($('s_tableFontSize').value, 10) || 14;
+    s.headerAlign = $('s_headerAlign').value;
+    s.orientation = $('s_orientation').value;
+
+    $('btnSaveSettings').disabled = true;
+    gsRun().withSuccessHandler(function (res) {
+      $('btnSaveSettings').disabled = false;
+      if (res.status !== 'success') { toast(res.message, 'danger'); return; }
+      globalData.orgName = res.orgName;
+      globalData.report = res.report;
+      globalData.orgLogo = res.report.orgLogo || '';
+      applyOrgAndLogo();
+      applyReportLayout();
+      renderReportHeader();
+      fillSettingsForm();
+      toast(res.message + ' ดูผลได้ที่รายงานรายเดือน', 'success');
+    }).withFailureHandler(onFail).saveReportSettings(s, adminPw);
+  }
+
+  // ---------- รายการตรวจ ----------
+  var itemDraft = [];
+
+  function fillItemsForm() {
+    itemDraft = (globalData.itemTexts || []).slice();
+    renderItemsEditor();
+  }
+
+  function renderItemsEditor() {
+    var max = globalData.maxItems || 30;
+    $('itemsEditor').innerHTML = itemDraft.map(function (t, i) {
+      var last = i === itemDraft.length - 1;
+      return '<div class="item-row">' +
+        '<span class="n">' + (i + 1) + '</span>' +
+        '<input type="text" class="ctl" data-item="' + i + '" maxlength="300" aria-label="รายการตรวจข้อ ' + (i + 1) + '" value="' + esc(t) + '">' +
+        (last && itemDraft.length > 1 ? '<button class="btn btn-danger-quiet btn-icon" type="button" data-rm-item="1" title="ลบรายการสุดท้าย" aria-label="ลบรายการสุดท้าย">' + ico('trash') + '</button>' : '') +
+        '</div>';
+    }).join('');
+    $('btnAddItem').disabled = itemDraft.length >= max;
+    $('itemCountInfo').textContent = '(' + itemDraft.length + ' / ' + max + ' ข้อ)';
+  }
+
+  function addItemRow() {
+    if (itemDraft.length >= (globalData.maxItems || 30)) return;
+    itemDraft.push('');
+    renderItemsEditor();
+    var inputs = $('itemsEditor').querySelectorAll('input');
+    if (inputs.length) inputs[inputs.length - 1].focus();
+  }
+
+  function saveItems() {
+    var texts = itemDraft.map(function (t) { return String(t).trim(); });
+    if (texts.some(function (t) { return !t; })) {
+      toast('มีรายการที่ว่างอยู่ กรุณากรอกให้ครบหรือลบรายการนั้น', 'warning');
+      return;
+    }
+    $('btnSaveItems').disabled = true;
+    gsRun().withSuccessHandler(function (res) {
+      $('btnSaveItems').disabled = false;
+      if (res.status !== 'success') { toast(res.message, 'danger'); return; }
+      globalData.items = res.items;
+      globalData.itemTexts = res.itemTexts;
+      buildChecklist();
+      fillItemsForm();
+      toast(res.message, 'success');
+    }).withFailureHandler(onFail).saveChecklistItems(texts, adminPw);
+  }
+
+  // ---------- เจ้าหน้าที่ประจำห้อง (ชีต Staff) ----------
+  function roomOptions(selected, blankLabel) {
+    return '<option value="">' + blankLabel + '</option>' + globalData.rooms.map(function (r) {
+      return '<option value="' + esc(r.id) + '"' + (r.id === selected ? ' selected' : '') + '>' + esc(r.name) + '</option>';
+    }).join('');
+  }
+
+  var PREFIXES = ['นาย', 'นาง', 'นางสาว', 'น.ส.', 'ดร.', 'นพ.', 'พญ.', 'ทพ.', 'ภก.', 'ภญ.', 'พ.อ.อ.', 'พ.อ.ท.', 'พ.อ.ต.', 'จ.อ.', 'ร.อ.', 'ร.ท.', 'ร.ต.', 'น.อ.', 'น.ท.', 'น.ต.', 'น.อ.หญิง', 'น.ท.หญิง', 'น.ต.หญิง', 'ร.อ.หญิง', 'พ.อ.อ.หญิง', 'พ.อ.ท.หญิง', 'พ.อ.ต.หญิง', 'ส.อ.', 'ส.อ.หญิง'];
+  function renderStaffList() {
+    $('prefixList').innerHTML = PREFIXES.map(function (x) { return '<option value="' + esc(x) + '"></option>'; }).join('');
+    var cur = $('newStaffRoom').value;
+    $('newStaffRoom').innerHTML = roomOptions(cur, '— ไม่ระบุห้อง —');
+    var list = globalData.staff || [];
+    $('staffListBody').innerHTML = list.length ? list.map(function (s) {
+      var orphan = s.roomId && !globalData.rooms.some(function (r) { return r.id === s.roomId; });
+      return '<tr data-staff="' + esc(s.id) + '">' +
+        '<td><input type="text" class="ctl ctl-sm" data-staff-name maxlength="100" aria-label="ชื่อ-สกุล" value="' + esc(s.name) + '"></td>' +
+        '<td><select class="ctl ctl-sm' + (orphan ? ' is-invalid' : '') + '" data-staff-room aria-label="ห้อง">' +
+          roomOptions(orphan ? '' : s.roomId, orphan ? 'ห้องถูกลบ — เลือกห้องใหม่' : '— ไม่ระบุห้อง —') + '</select></td>' +
+        '<td class="actions"><button class="btn btn-danger-quiet btn-icon" type="button" data-del-staff="1" aria-label="ลบเจ้าหน้าที่">' + ico('trash') + '</button></td></tr>';
+    }).join('') : '<tr class="empty"><td colspan="3">ยังไม่มีเจ้าหน้าที่ เพิ่มคนแรกได้ด้านบน</td></tr>';
+  }
+
+  function refreshRoomsAndStaff(data) {
+    globalData.rooms = data.rooms;
+    globalData.staff = data.staff || [];
+    fillRooms();
+    renderRoomList();
+    renderStaffList();
+    onRoomChange(); // อัปเดตรายชื่อแนะนำของห้องที่เลือกอยู่
+  }
+
+  function addStaff() {
+    var name = $('newStaffName').value.trim();
+    if (!name) { toast('กรุณากรอกชื่อเจ้าหน้าที่', 'warning'); return; }
+    var prefix = $('newStaffPrefix').value.trim();
+    // ต่อคำนำหน้าติดกับชื่อแบบไทย (น.ส.โชติกา) ยกเว้นคำนำหน้าที่เป็นคำเต็ม (เช่น นาย ดร.) ให้เว้นวรรคเมื่อลงท้ายด้วยตัวอักษรไม่ใช่จุด
+    var full = prefix ? prefix + (/[.]$/.test(prefix) ? '' : ' ') + name : name;
+    if (full.length > 100) { toast('ชื่อยาวเกิน 100 ตัวอักษร', 'warning'); return; }
+    runStaffAction('add', { name: full, roomId: $('newStaffRoom').value }, function () {
+      $('newStaffName').value = '';
+      $('newStaffPrefix').value = '';
+    });
+  }
+
+  function runStaffAction(action, payload, after) {
+    gsRun().withSuccessHandler(function (res) {
+      toast(res.message, res.status === 'success' ? 'success' : 'danger');
+      if (res.status === 'success' && after) after();
+      // รีเฟรชจากเซิร์ฟเวอร์เสมอ (กรณีผิดพลาดจะคืนค่าที่ช่องกรอกให้ตรงกับข้อมูลจริง)
+      gsRun().withSuccessHandler(refreshRoomsAndStaff).withFailureHandler(onFail).getAppData();
+    }).withFailureHandler(onFail).manageStaff(action, payload, adminPw);
+  }
+
+  // ---------- ผู้ดูแลระบบ (เฉพาะผู้ดูแลหลัก) ----------
+  function renderAdmins(list) {
+    $('adminListBody').innerHTML = (list && list.length) ? list.map(function (a) {
+      return '<tr><td data-label="รหัส">' + esc(a.id) + '</td><td data-label="ชื่อผู้ดูแล"><strong>' + esc(a.name) + '</strong></td>' +
+             '<td class="actions"><button class="btn btn-danger-quiet btn-icon" type="button" data-del-admin="' + esc(a.id) + '" data-name="' + esc(a.name) + '" aria-label="ลบผู้ดูแล ' + esc(a.name) + '">' + ico('trash') + '</button></td></tr>';
+    }).join('') : '<tr class="empty"><td colspan="3">ยังไม่มีผู้ดูแลเพิ่มเติม ตอนนี้ใช้ได้เฉพาะรหัสผ่านหลัก</td></tr>';
+  }
+  function loadAdmins() {
+    gsRun().withSuccessHandler(function (res) {
+      if (res.status === 'success') renderAdmins(res.admins); else toast(res.message, 'danger');
+    }).withFailureHandler(onFail).manageAdmin('list', {}, adminPw);
+  }
+  function addAdmin() {
+    var name = $('newAdminName').value.trim(), pw = $('newAdminPw').value;
+    if (!name) { toast('กรุณากรอกชื่อผู้ดูแล', 'warning'); $('newAdminName').focus(); return; }
+    if (pw.length < 6) { toast('รหัสผ่านต้องยาวอย่างน้อย 6 ตัวอักษร', 'warning'); $('newAdminPw').focus(); return; }
+    gsRun().withSuccessHandler(function (res) {
+      toast(res.message, res.status === 'success' ? 'success' : 'danger');
+      if (res.status === 'success') { $('newAdminName').value = ''; $('newAdminPw').value = ''; renderAdmins(res.admins); }
+    }).withFailureHandler(onFail).manageAdmin('add', { name: name, password: pw }, adminPw);
+  }
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-del-admin]');
+    if (!btn) return;
+    if (!confirm('ต้องการลบผู้ดูแล "' + btn.getAttribute('data-name') + '" ใช่หรือไม่?\n(รหัสผ่านของผู้ดูแลคนนี้จะใช้เข้าระบบไม่ได้อีก)')) return;
+    gsRun().withSuccessHandler(function (res) {
+      toast(res.message, res.status === 'success' ? 'success' : 'danger');
+      if (res.status === 'success') renderAdmins(res.admins);
+    }).withFailureHandler(onFail).manageAdmin('delete', { id: btn.getAttribute('data-del-admin') }, adminPw);
+  });
+
+  // ---------- จัดการห้อง ----------
+  function renderRoomList() {
+    var body = $('roomListBody');
+    if (!globalData.rooms.length) {
+      body.innerHTML = '<tr class="empty"><td colspan="4">ยังไม่มีห้อง เพิ่มห้องแรกได้ด้านบน</td></tr>';
+      return;
+    }
+    body.innerHTML = globalData.rooms.map(function (r) {
+      return '<tr><td data-label="รหัส">' + esc(r.id) + '</td><td data-label="ห้อง"><strong>' + esc(r.name) + '</strong></td><td data-label="เจ้าหน้าที่ประจำห้อง">' + (esc(r.owner) || '<span class="hint">ยังไม่ระบุ</span>') + '</td>' +
+             '<td class="actions"><button class="btn btn-danger-quiet btn-icon" type="button" data-del="' + esc(r.id) + '" data-name="' + esc(r.name) + '" aria-label="ลบห้อง ' + esc(r.name) + '">' + ico('trash') + '</button></td></tr>';
+    }).join('');
+  }
+
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-del]');
+    if (!btn) return;
+    var id = btn.getAttribute('data-del');
+    var name = btn.getAttribute('data-name');
+    if (!confirm('ต้องการลบห้อง "' + name + '" ใช่หรือไม่?\n(ประวัติการตรวจเดิมจะยังอยู่ในชีต)')) return;
+    runRoomAction('delete', { id: id });
+  });
+
+  function addRoom() {
+    var name = $('newRoomName').value.trim();
+    if (!name) { toast('กรุณากรอกชื่อห้อง', 'warning'); return; }
+    runRoomAction('add', { name: name }, function () {
+      $('newRoomName').value = '';
+    });
+  }
+
+  function runRoomAction(action, payload, after) {
+    gsRun().withSuccessHandler(function (res) {
+      toast(res.message, res.status === 'success' ? 'success' : 'danger');
+      if (res.status === 'success') {
+        if (after) after();
+        // รีเฟรชรายชื่อห้องจากเซิร์ฟเวอร์ (คงค่าที่กำลังแก้ในฟอร์มตั้งค่าไว้)
+        gsRun().withSuccessHandler(function (data) {
+          refreshRoomsAndStaff(data);
+        }).withFailureHandler(onFail).getAppData();
+      }
+    }).withFailureHandler(onFail).manageRoom(action, payload, adminPw);
+  }
+</script>
+</body>
+</html>
